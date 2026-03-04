@@ -64,8 +64,258 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
 
 ## Requisitos funcionais
 
-_(a preencher)_
+### 1. Fluxo — Criar pagamento
+
+- **Objetivo**  
+  Registrar um novo pagamento no Payment Hub, garantindo consistência da intenção de pagamento, aplicação de regras de negócio básicas e preparo para orquestração com provedores externos.
+
+- **Entradas (body/query/headers)**  
+  - **Headers**  
+    - `Authorization`: token de autenticação do cliente (obrigatório).  
+    - `Idempotency-Key`: chave idempotente fornecida pelo cliente, única por combinação de negócio em uma janela de tempo (obrigatório para criação).  
+    - `X-Correlation-Id`: identificador de correlação para rastreio ponta a ponta (opcional; gerado pelo hub se ausente).  
+  - **Query params**  
+    - Nenhum obrigatório; apenas parâmetros futuros (ex.: `mode=async|sync`) poderão ser adicionados.  
+  - **Body (JSON)**  
+    - **Identificação do pagador**  
+      - `payer.id` ou `payer.externalId` (obrigatório – chave de referência do cliente).  
+    - **Identificação do favorecido**  
+      - `payee.id` ou `payee.externalId` (obrigatório).  
+    - **Montante e moeda**  
+      - `amount` (obrigatório, > 0).  
+      - `currency` (obrigatório, ex.: `BRL`, `USD`).  
+    - **Meio de pagamento / canal**  
+      - `paymentMethod.type` (ex.: `PIX`, `CARD`, `BOLETO`, etc.).  
+      - Campos específicos por tipo (ex.: chave PIX, dados de cartão tokenizados, etc.).  
+    - **Metadados e referências externas**  
+      - `externalReference` (opcional; referência do sistema chamador).  
+      - `callbackUrl` (opcional; notificação assíncrona).  
+      - `metadata` (opcional; mapa chave/valor).  
+
+- **Validações essenciais**  
+  - **Autenticação e autorização**  
+    - `Authorization` válido e com escopo para criar pagamentos.  
+  - **Idempotência**  
+    - `Idempotency-Key` presente, não vazio, dentro do limite de tamanho aceito.  
+    - Para mesma `Idempotency-Key` + `cliente`, retornos consistentes conforme regras do fluxo de idempotência.  
+  - **Body**  
+    - Campos obrigatórios presentes (`payer`, `payee`, `amount`, `currency`, `paymentMethod.type`).  
+    - `amount > 0`.  
+    - `currency` suportada pelo hub.  
+    - Consistência entre `paymentMethod.type` e campos específicos (ex.: chave PIX obrigatória se tipo = `PIX`).  
+  - **Regras de negócio mínimas**  
+    - Pagador e favorecido não podem ser a mesma entidade em cenários que o contexto proíba (ex.: PIX entre contas diferentes obrigatórias).  
+    - Verificação básica de limites (ex.: limite diário por cliente, se já existir contador).  
+    - Verificação de duplicidade óbvia por business key (ver seção de invariantes).  
+
+- **Processamento (alto nível)**  
+  - **1. Criação de intenção de pagamento**  
+    - Normaliza request → monta entidade interna `Payment`.  
+    - Gera `paymentId` interno único e estado inicial `CREATED` ou `PENDING`.  
+    - Persiste registro com: dados do pagamento, `Idempotency-Key`, `businessKey`, timestamps e `correlationId`.  
+  - **2. Aplicação de regras de negócio síncronas mínimas**  
+    - Checa limites, bloqueios simples (ex.: cliente bloqueado, merchant desabilitado).  
+    - Se falhar, marca pagamento como `FAILED` com razão clara.  
+  - **3. Disparo de orquestração (se aplicável ao MVP)**  
+    - Opcionalmente publica evento ou agenda job para integração com provedor externo.  
+  - **4. Resposta ao chamador**  
+    - Sempre retorna representação do recurso `Payment` (estado atual, não necessariamente final).  
+
+- **Saídas (response)**  
+  - **Body (JSON)** – sucesso (201)  
+    - `paymentId`  
+    - `status` (ex.: `CREATED`, `PENDING`, `FAILED`)  
+    - `amount`, `currency`  
+    - `payer`, `payee`  
+    - `paymentMethod` (mascarado/seguro)  
+    - `externalReference`  
+    - `createdAt`, `updatedAt`  
+    - `idempotencyKey`  
+    - `correlationId`  
+  - **Body (JSON)** – erro  
+    - `{ "code": string, "message": string, "details"?: object, "correlationId": string }`  
+
+- **Status codes possíveis**  
+  - **201 Created**: pagamento criado com sucesso (intenção registrada).  
+  - **400 Bad Request**: payload inválido (campos obrigatórios ausentes, formatos inválidos).  
+  - **401 Unauthorized**: token inválido ou ausente.  
+  - **403 Forbidden**: cliente autenticado, mas sem permissão para criar pagamentos.  
+  - **409 Conflict**: conflito de idempotência ou duplicidade de negócio.  
+  - **422 Unprocessable Entity**: regras de negócio rejeitaram o pagamento (ex.: limite excedido, cliente bloqueado).  
+  - **429 Too Many Requests**: rate limit excedido.  
+  - **500 Internal Server Error**: erro inesperado interno.  
+  - **503 Service Unavailable**: dependência crítica indisponível (ex.: banco ou provedor de pagamento).  
+
+- **Erros padronizados (exemplos)**  
+  - **Validação de campos**  
+    - `code`: `PAYMENT_VALIDATION_ERROR`  
+    - `message`: `"Dados de pagamento inválidos."`  
+    - `details`: `{ "fieldErrors": [ { "field": "amount", "error": "MUST_BE_POSITIVE" } ] }`  
+  - **Idempotência — requisição repetida compatível**  
+    - Mesmo `Idempotency-Key` e mesma combinação de dados relevantes → retorna 201/200 com mesma representação do pagamento (sem erro).  
+  - **Idempotência — conflito**  
+    - `code`: `PAYMENT_IDEMPOTENCY_CONFLICT`  
+    - `message`: `"Conflito de idempotência: requisição incompatível com chamada anterior."`  
+    - `details`: `{ "idempotencyKey": "..." }`  
+  - **Regra de negócio rejeitada**  
+    - `code`: `PAYMENT_BUSINESS_RULE_VIOLATION`  
+    - `message`: `"Pagamento não autorizado pelas regras de negócio."`  
+
+### 2. Fluxo — Consultar pagamento
+
+- **Objetivo**  
+  Recuperar o estado atual e os dados principais de um pagamento previamente criado, de forma consistente e segura.
+
+- **Entradas (body/query/headers)**  
+  - **Headers**  
+    - `Authorization` (obrigatório).  
+    - `X-Correlation-Id` (opcional).  
+  - **Path params**  
+    - `paymentId` (obrigatório) **ou** outro identificador definido no contexto (ex.: `externalReference` + cliente).  
+  - **Query params** (opcionais)  
+    - `expand=` (ex.: `expand=events,history` para detalhes mais ricos, conforme evolução).  
+
+- **Validações essenciais**  
+  - Autenticação e autorização do cliente.  
+  - Verificar se o cliente tem acesso ao `paymentId` solicitado (multi-tenant / escopo).  
+  - Validação de formato do `paymentId`.  
+
+- **Processamento (alto nível)**  
+  - Localiza o pagamento pelo identificador (índice por `paymentId` e/ou `externalReference+tenant`).  
+  - Aplica filtros de autorização (o chamador pode ver este pagamento?).  
+  - Monta DTO de resposta com: dados do pagamento + status atual + últimos timestamps relevantes.  
+  - Opcionalmente agrega dados de eventos de status (se `expand` solicitado e suportado).  
+
+- **Saídas (response)**  
+  - **Body (JSON)** – sucesso (200)  
+    - `paymentId`  
+    - `status` (ex.: `CREATED`, `PENDING`, `AUTHORIZED`, `SETTLED`, `FAILED`, `CANCELLED`)  
+    - `amount`, `currency`  
+    - `payer`, `payee`  
+    - `paymentMethod` (mascarado)  
+    - `externalReference`  
+    - `createdAt`, `updatedAt`, `completedAt` (quando existir)  
+    - `correlationId` (último correlacionado ou o da criação)  
+  - **Body (JSON)** – erro  
+    - `{ "code", "message", "details"?, "correlationId" }`  
+
+- **Status codes possíveis**  
+  - **200 OK**: pagamento encontrado.  
+  - **400 Bad Request**: identificador em formato inválido.  
+  - **401 Unauthorized**: token inválido ou ausente.  
+  - **403 Forbidden**: cliente não tem acesso ao pagamento.  
+  - **404 Not Found**: pagamento não encontrado.  
+  - **429 Too Many Requests**: rate limit excedido.  
+  - **500 Internal Server Error**: erro inesperado.  
+
+- **Erros padronizados (exemplos)**  
+  - **Pagamento não encontrado**  
+    - `code`: `PAYMENT_NOT_FOUND`  
+    - `message`: `"Pagamento não encontrado."`  
+    - `details`: `{ "paymentId": "..." }`  
+  - **Acesso negado**  
+    - `code`: `PAYMENT_ACCESS_DENIED`  
+    - `message`: `"Você não tem acesso a este pagamento."`  
+
+### 3. Fluxo — Idempotência de pagamento (replay e conflitos)
+
+- **Objetivo**  
+  Garantir que múltiplas chamadas de criação de pagamento (retries, reenvios ou problemas de rede) não resultem em múltipliplas intenções inconsistentes, preservando a semântica “uma intenção de pagamento por chave idempotente”.
+
+- **Entradas relacionadas**  
+  - `Idempotency-Key` no header de criação de pagamento.  
+  - Parâmetros usados para compor a **business key** (ver invariantes).  
+
+- **Validações essenciais**  
+  - `Idempotency-Key` não pode ser vazio e deve atender formato/tamanho máximo.  
+  - Combinação `(tenant/cliente, Idempotency-Key)` deve ser única durante a janela de retenção configurada.  
+  - Na repetição de requisição com mesma `Idempotency-Key`, comparar payload relevante com registro anterior (para detectar conflito).  
+
+- **Processamento (alto nível)**  
+  - **1. Recepção da requisição de criação**  
+    - Gera/recebe `correlationId`.  
+    - Busca se já existe registro para `(tenant, Idempotency-Key)`.  
+  - **2. Comportamento em caso de “first call”**  
+    - Não existe registro → cria pagamento normalmente, liga `Idempotency-Key` ao `paymentId` e persiste.  
+    - Armazena também o “hash” ou subconjunto canônico do payload de negócio para comparação futura.  
+  - **3. Comportamento em caso de “replay compatível”**  
+    - Registro encontrado para mesma `Idempotency-Key`.  
+    - Payload atual é equivalente ao payload canônico armazenado.  
+    - Retorna a mesma representação do pagamento já criado (201/200) sem criar novos registros.  
+    - Garante que o estado do pagamento não seja alterado indevidamente por causa do replay.  
+  - **4. Comportamento em caso de “replay conflitante”**  
+    - Registro encontrado, mas payload atual difere em campos relevantes (ex.: `amount`, `currency`, `payee`).  
+    - Não altera o pagamento já existente.  
+    - Retorna erro `409 Conflict` com payload de erro padronizado.  
+
+- **Saídas (response)**  
+  - Em caso de replay compatível:  
+    - Mesmo shape de sucesso do fluxo “Criar pagamento”.  
+    - Pode incluir campo adicional de metadado: `idempotencyReplay: true` (se o contexto desejar).  
+  - Em caso de conflito:  
+    - `{ "code", "message", "details"?, "correlationId" }`  
+
+- **Status codes possíveis**  
+  - **201 Created / 200 OK**: primeira criação ou replay compatível.  
+  - **400 Bad Request**: `Idempotency-Key` ausente ou inválida quando obrigatória.  
+  - **409 Conflict**: `Idempotency-Key` já usada com payload diferente.  
+  - **500 Internal Server Error**: falha em verificar/registrar idempotência.  
+
+- **Erros padronizados (exemplos)**  
+  - **Chave idempotente ausente**  
+    - `code`: `IDEMPOTENCY_KEY_REQUIRED`  
+    - `message`: `"Cabeçalho Idempotency-Key é obrigatório para este recurso."`  
+  - **Conflito de idempotência**  
+    - `code`: `PAYMENT_IDEMPOTENCY_CONFLICT`  
+    - `message`: `"Conflito de idempotência com requisição anterior."`  
+    - `details`: `{ "idempotencyKey": "...", "existingPaymentId": "..." }`  
 
 ## Requisitos não funcionais
 
-_(a preencher)_
+- **Observabilidade**  
+  - Logs estruturados com: `correlationId`, `paymentId`, `tenantId`, `status`, `errorCode` (quando houver).  
+  - Métricas mínimas:  
+    - Contador de pagamentos criados por status final.  
+    - Latência de criação e consulta.  
+    - Contador de erros por `code`.  
+  - Traços (tracing):  
+    - Propagação de `X-Correlation-Id` / trace-id para serviços downstream (quando existirem).  
+
+- **Consistência**  
+  - Escritas de criação de pagamento devem ser fortemente consistentes no armazenamento primário (o `paymentId` retornado deve sempre existir e ser consultável em seguida).  
+  - Notificações e integrações externas podem ser eventualmente consistentes, desde que o estado interno seja a fonte de verdade.  
+
+- **Segurança**  
+  - Comunicação somente sobre TLS (HTTPS).  
+  - Autenticação obrigatória via esquema padronizado (ex.: OAuth2/JWT), de acordo com o Context Pack.  
+  - Autorização por escopo/role e por tenant.  
+  - Dados sensíveis (ex.: dados de cartão) nunca são retornados em claro, apenas tokens/aliases.  
+  - Logs não podem registrar dados confidenciais (apenas identificadores ou versões mascaradas).  
+
+- **Performance e resiliência**  
+  - Latência média aceitável para criação e consulta (ex.: P95 < X ms para MVP, definido no contexto).  
+  - Rate limiting por cliente para proteção do hub.  
+  - Timeouts razoáveis para integrações externas; em caso de falha, o estado interno deve refletir claramente a situação (`PENDING` vs `FAILED`).  
+
+- **Regras, invariantes e modelo de estados**  
+  - **Idempotency-Key**  
+    - Obrigatória para criação de pagamento.  
+    - Escopo: única por `(tenant/cliente, Idempotency-Key)` em janela configurável (ex.: N dias).  
+    - Associada 1:1 a um `paymentId`.  
+  - **Business key de pagamento (conceito)**  
+    - Combinação lógica que identifica uma “intenção” de pagamento, por exemplo:  
+      - `tenantId`, `payer`, `payee`, `amount`, `currency`, `externalReference` (ajustar conforme contexto real).  
+    - Usada para detecção adicional de duplicidade de negócio (além da `Idempotency-Key`).  
+  - **Transição de estado do pagamento (exemplo mínimo)**  
+    - Estados possíveis:  
+      - `CREATED` → intenção registrada, ainda não enviada.  
+      - `PENDING` → em processamento junto ao provedor.  
+      - `AUTHORIZED` → valor autorizado, ainda não liquidado.  
+      - `SETTLED` → pagamento concluído com sucesso.  
+      - `FAILED` → falha irrecuperável.  
+      - `CANCELLED` → cancelado após criação.  
+    - Invariantes de transição:  
+      - Não é permitido voltar de um estado final (`SETTLED`, `FAILED`, `CANCELLED`) para estados anteriores.  
+      - Alterações de `amount` e `currency` não são permitidas após `AUTHORIZED` (ou outro marco definido).  
+      - Requisição idempotente de criação não altera estado, apenas retorna o atual.  
+
