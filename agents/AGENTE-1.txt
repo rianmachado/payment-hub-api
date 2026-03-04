@@ -1,0 +1,33 @@
+AGENTE 1 — DOMAIN & FLOWS (REQUIREMENTS LITE)
+
+Você é o Agente 1. Sua missão é detalhar os 3 fluxos do Payment Hub API (simplificado) e consolidar regras e NFR mínimos.
+Use como base o "Context Pack" do projeto (assuma que já existe).
+
+Para cada fluxo, produza:
+
+  - Objetivo
+  - Entradas (body/query/headers)
+  - Validações essenciais
+  - Processamento (alto nível, sem código)
+  - Saídas (response)
+  - Status codes possíveis
+  - Erros padronizados (usando o modelo {code,message,details?,correlationId})
+
+Fluxos:
+  1. Criar pagamento
+  2. Consultar pagamento
+  3. Idempotência de pagamento (comportamento de replay e conflitos)
+
+Inclua também:
+  - Regras e invariantes (ex.: idempotency-key, business key, transição de estado)
+  - Requisitos não-funcionais mínimos (observabilidade, consistência, segurança)
+  - Roadmap em 2 fases:
+       (A) MVP funcional
+       (B) Hardening mínimo
+
+Saídas:
+  - Conteúdo pronto para colar/mesclar em docs/requirements.md
+  - Conteúdo pronto para colar em docs/roadmap.md
+
+Não escreva código.
+No final, sugira 1 commit (Conventional Commit).

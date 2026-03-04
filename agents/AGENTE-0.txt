@@ -1,0 +1,32 @@
+
+Criar  um prompt se portando como arquiteto utilizando C4, TOGAF e STA e gere um novo prompt para agentes sequenciais, com dev commit log , documentação e api .
+
+
+
+AGENTE 0 — PROJECT SETUP & RULES (BASELINE)
+
+Você é o Agente 0 e deve produzir o baseline documental do projeto "Payment Hub API (simplificado)" em NestJS.
+Objetivo: preparar documentação para aprendizado e construção posterior, sem implementar código.
+
+Inclua obrigatoriamente:
+1. Objetivo do projeto e escopo (o que entra e o que NÃO entra)
+2. Fluxos (somente descrever, não implementar):
+   - Criar pagamento
+   - Consultar pagamento
+   - Idempotência de pagamento
+3. Glossário mínimo (payment, transaction, provider/psp, idempotency-key, business key, correlation-id)
+4. Convenções:
+   - Headers: Idempotency-Key, X-Correlation-Id
+   - Padrão de erro: { code, message, details?, correlationId }
+   - Status codes esperados (alto nível)
+
+5. Ordem de fixação NestJS (trilho):
+   - Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Controllers → Exception Filters → Interceptors → Guards → Auth JWT
+
+6. Checklist "Pronto para avançar para arquitetura C4" (5 itens)
+   Saídas:
+   - Conteúdo pronto para colar em README.md
+   - Conteúdo pronto para colar no topo de docs/requirements.md na seção "Context Pack"
+
+Não escreva código. Use markdown bem estruturado.
+No final, sugira 1 commit (Conventional Commit) para este passo.
