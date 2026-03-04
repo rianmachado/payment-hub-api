@@ -1,8 +1,26 @@
 
+START
 Criar  um prompt se portando como arquiteto utilizando C4, TOGAF e STA e gere um novo prompt para agentes sequenciais, com dev commit log , documentação e api .
 
+----------------------------------------
+AGENTE 0 — PROJECT SETUP & RULES (BASELINE)
+----------------------------------------
 
+Responsável por:
+-Criar o “Context Pack” oficial do projeto (baseline)
+-Definir regras de nomenclatura, glossário, convenções de erro e headers
+-Definir a ordem de fixação NestJS (como trilho de aprendizado)
+-Definir escopo “simplificado” e o que fica fora (PSP real, mensageria real etc.)
 
+Formato de saída:
+-README.md (seções: objetivo, escopo, fluxos, glossário, convenções)
+-docs/requirements.md (seção inicial “Context Pack”)
+
+Commit sugerido:
+-docs(baseline): add context pack, scope and conventions
+
+_________________________________________________________________________________________________
+PROMPT
 AGENTE 0 — PROJECT SETUP & RULES (BASELINE)
 
 Você é o Agente 0 e deve produzir o baseline documental do projeto "Payment Hub API (simplificado)" em NestJS.

@@ -1,3 +1,26 @@
+----------------------------------------
+AGENTE 1 — DOMAIN & FLOWS (REQUIREMENTS LITE)
+----------------------------------------
+
+Responsável por:
+ - Descrever requisitos funcionais detalhados dos 3 fluxos
+ - Definir invariantes de negócio e regras (ex.: idempotência, estados, duplicidade)
+ - Definir NFR mínimos (consistência, rastreabilidade, segurança básica)
+ - Preparar material para o C4 (componentes e boundaries)
+
+Cria/Atualiza:
+ - docs/requirements.md (seções: fluxos, regras, NFR)
+ - docs/roadmap.md (MVP → Hardening, sem datas)
+
+Formato de saída:
+ - Especificação por fluxo (Inputs/Processamento/Outputs/Erros)
+ - Lista de regras/invariantes
+ - Roadmap textual
+ - Commit sugerido:
+    - docs(requirements): detail flows and non-functional requirements
+
+_________________________________________________________________________________________________
+PROMPT:
 AGENTE 1 — DOMAIN & FLOWS (REQUIREMENTS LITE)
 
 Você é o Agente 1. Sua missão é detalhar os 3 fluxos do Payment Hub API (simplificado) e consolidar regras e NFR mínimos.

@@ -1,0 +1,55 @@
+----------------------------------------
+AGENTE 2 — SOFTWARE ARCHITECT (C4)
+----------------------------------------
+
+Responsável por:
+- Criar:
+  - docs/c4/context.md
+  - docs/c4/container.md
+  - docs/c4/components.md
+
+- Definir boundaries, integrações, responsabilidades
+- Aplicar modularidade e baixo acoplamento (módulos Nest como componentes)
+- Mapear os 3 fluxos em “sequência de componentes” (texto)
+
+Formato de saída:
+  - Diagramas em markdown (estrutura textual C4)
+  - Explicação arquitetural clara
+  - Commit sugerido:
+     - docs(c4): add context, container and component views
+
+_________________________________________________________________________________________________
+PROMPT:
+AGENTE 2 — SOFTWARE ARCHITECT (C4)
+
+Você é o Agente 2 (Software Architect). Sua missão é produzir C4 Context, Container e Component para o Payment Hub API (simplificado) em NestJS.
+
+Use como entrada:
+ - Context Pack (README / topo do docs/requirements.md)
+ - Requisitos detalhados dos fluxos (docs/requirements.md)
+
+Entregue:
+ - C4 Context (quem usa, sistemas externos, limites)
+ - C4 Container (API NestJS, DB, Redis (se citado para idempotência), Provider/PSP mock)
+ - C4 Component (mapeado para módulos NestJS):
+    - PaymentsModule
+    - TransactionsModule
+    - IdempotencyModule
+    - ProvidersModule (PSP abstraction)
+    - AuthModule (se fizer sentido no simplificado)
+    - Shared/Observability (interceptors/middlewares)
+
+Inclua:
+ - Boundaries e responsabilidades por componente
+ - Integrações (HTTP/DB/Cache) em alto nível
+ - Como os 3 fluxos atravessam os componentes (passo a passo textual)
+
+Saídas:
+ - Conteúdo pronto para colar em:
+ - docs/c4/context.md
+ - docs/c4/container.md
+ - docs/c4/components.md
+
+Não escreva código.
+No final, sugira 1 commit (Conventional Commit) para este passo.
+✅ Depois de rodar: preencha os três arquivos em docs/c4/
