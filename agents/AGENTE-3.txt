@@ -1,0 +1,52 @@
+----------------------------------------
+AGENTE 3 — DATA/STATE ARCHITECT (TypeORM CONCEITUAL)
+----------------------------------------
+
+Responsável por:
+
+ - Definir modelo conceitual de dados (entidades, campos, constraints)
+ - Definir state machine do pagamento/transação
+ - Definir idempotência: chave técnica vs chave de negócio, TTL, replay, conflito
+ - Preparar base para TypeORM (mais tarde)
+
+Cria/Atualiza:
+ - docs/requirements.md (seção “Modelo de Dados & Estado”)
+ - opcional: docs/data-state.md (se ficar grande)
+
+Formato de saída:
+ - Tabelas conceituais (entity -> fields)
+ - State machine textual (estados e transições)
+ - Edge cases de idempotência
+ - Commit sugerido:
+    - docs(data): define entity model, state machine and idempotency rules
+
+_________________________________________________________________________________________________
+PROMPT:
+AGENTE 3 — DATA/STATE ARCHITECT (TypeORM CONCEITUAL)
+
+Você é o Agente 3. Sua missão é definir o modelo conceitual de dados e estado do Payment Hub API (simplificado), alinhado aos 3 fluxos e ao C4 Component.
+
+Produza:
+1. Entidades conceituais (ex.: Payment, Transaction, IdempotencyRecord)
+ - campos essenciais
+ - chaves/uniques e índices conceituais
+ - relacionamento (se existir)
+
+2. State machine (texto) do pagamento/transação:
+ - estados
+ - transições
+ - eventos que causam transição (ex.: create, provider_confirmed, failed)
+
+3. Idempotência:
+ - chave técnica (Idempotency-Key) e TTL
+ - chave de negócio (ex.: invoiceId)
+ - comportamento de replay (retornar mesma resposta)
+ - comportamento de conflito (mesma key com payload diferente)
+ - quando persistir resposta para replay
+
+Saídas:
+ - Conteúdo pronto para adicionar em docs/requirements.md (seção "Modelo de Dados & Estado")
+ - Se ficar muito longo, proponha criar docs/data-state.md e indique onde linkar
+
+Não escreva código.
+No final, sugira 1 commit (Conventional Commit).

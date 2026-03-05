@@ -298,6 +298,7 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
   - Timeouts razoáveis para integrações externas; em caso de falha, o estado interno deve refletir claramente a situação (`PENDING` vs `FAILED`).  
 
 - **Regras, invariantes e modelo de estados**  
+  - Para o **modelo conceitual completo** de entidades, state machines e idempotência (Payment, Transaction, IdempotencyRecord, ProviderConfig, EventLog; transições de estado; replay e conflitos), ver **[Modelo de Dados & Estado](data-state.md)**.
   - **Idempotency-Key**  
     - Obrigatória para criação de pagamento.  
     - Escopo: única por `(tenant/cliente, Idempotency-Key)` em janela configurável (ex.: N dias).  
