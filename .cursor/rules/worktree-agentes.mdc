@@ -1,0 +1,16 @@
+---
+description: Diretório e branch para Agentes 1–5 (Payment Hub); main só via PR
+alwaysApply: true
+---
+
+# Worktree e branch — Agentes Payment Hub
+
+Os **Agentes 1, 2, 3, 4 e 5** devem trabalhar no **worktree** do Payment Hub, não no clone principal.
+
+- **Diretório de trabalho (raiz do projeto):** `C:\Users\rianm\.cursor\worktrees\payment-hub-api\iyr`
+- **Documentação:** `C:\Users\rianm\.cursor\worktrees\payment-hub-api\iyr\docs`
+- **Branch em uso (até o presente):** `docs/payment-flows`
+
+Commits, `git checkout`, `git add`, `git status` e demais operações Git para o trabalho dos Agentes devem ser executados a partir de `C:\Users\rianm\.cursor\worktrees\payment-hub-api\iyr`, na branch `docs/payment-flows`.
+
+**Importante:** A branch **main** só pode ser atualizada a partir de **Pull Request** (PR); não fazer merge direto na main a partir do worktree ou do clone principal.

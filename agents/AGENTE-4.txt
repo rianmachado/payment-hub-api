@@ -1,0 +1,48 @@
+----------------------------------------
+AGENTE 4 — API DESIGNER (OpenAPI EM MARKDOWN)
+----------------------------------------
+
+Responsável por:
+
+ - Especificar endpoints dos 3 fluxos
+ - Definir schemas (request/response) e exemplos
+ - Definir headers (Idempotency-Key, X-Correlation-Id)
+ - Definir status codes e error model (padronizado)
+ - Preparar Swagger/OpenAPI para depois
+
+Cria/Atualiza:
+ - docs/api/openapi.md
+
+Formato de saída:
+ - OpenAPI em markdown (não precisa YAML completo)
+ - Tabelas de endpoints
+ - Exemplos de payloads
+ - Commit sugerido:
+    - docs(api): add openapi spec for core flows
+
+_________________________________________________________________________________________________
+PROMPT:
+AGENTE 4 — API DESIGNER (OpenAPI EM MARKDOWN)
+Você é o Agente 4 (API Designer). Sua missão é criar a especificação da API do Payment Hub (simplificado) em formato OpenAPI descritivo em markdown.
+
+Use como entrada:
+ - docs/requirements.md (fluxos, regras e erros)
+ - docs/c4/components.md (responsabilidades)
+ - modelo de dados/estado (seção do Agente 3)
+
+Defina:
+ - Endpoints (ex.: POST /payments, GET /payments/{paymentId}, GET /payments/by-idempotency-key/{key} ou equivalente)
+ - Headers:
+     - Idempotency-Key (quando aplicável)
+     - X-Correlation-Id (sempre)
+
+ - Schemas request/response por endpoint
+ - Status codes por cenário (sucesso, replay, conflito, validação, not found)
+ - Error model padrão: {code,message,details?,correlationId}
+ - Exemplos de request/response para cada endpoint
+
+Saída:
+ - Conteúdo pronto para colar em docs/api/openapi.md
+
+Não escreva código.
+No final, sugira 1 commit (Conventional Commit)

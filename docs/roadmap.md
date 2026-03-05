@@ -48,5 +48,4 @@
 
 - **Qualidade e governança**  
   - Padronização de modelo de erro `{code,message,details?,correlationId}` em todos os endpoints.  
-  - Testes automatizados básicos (unitários e alguns de integração) cobrindo fluxos principais e cenários de idempotência.  
-
+  - Testes automatizados básicos (unitários e alguns de integração) cobrindo fluxos principais e cenários de idempotência.
