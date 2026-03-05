@@ -1,0 +1,19 @@
+description: Configuração de worktrees para Agents Payment Hub
+alwaysApply: false
+
+# Worktrees relativos ao diretório raiz do projeto
+worktrees:
+  - name: Agente-0, Agente-1, Agente-2, Agente-3, Agente-4, Agente-5  
+    path: .cursor/worktrees/payment-hub-api
+    branch: docs/payment-flows
+
+  # Exemplo de novos agentes (cada um em branch própria)
+#  - name: new-agent-1
+#    path: .cursor/worktrees/agent-new-1
+#    branch: feature/agent-new-1
+
+notes:
+  - Use paths relativos para portabilidade entre máquinas
+  - A branch main só deve ser atualizada via PR
+  - Cada agente deve operar em seu worktree isolado
+  - Commits e Git operations devem ocorrer dentro do worktree correspondente
