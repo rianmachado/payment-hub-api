@@ -1,0 +1,64 @@
+----------------------------------------
+AGENTE 5 — PLATFORM/QUALITY (STA: Observability + Security + Checklist)
+----------------------------------------
+
+Responsável por:
+
+ - Definir observabilidade mínima (correlation-id, logging, métricas conceituais)
+ - Definir segurança mínima (guards, api key, jwt opcional admin)
+ - Definir checklist por camada Nest:
+    - DTO/validation/pipes/middleware
+    - exception filters
+    - interceptors
+    - guards/auth
+ 
+ - Mapear riscos operacionais e mitigação (STA)
+ 
+Cria/Atualiza:
+ - docs/quality.md
+ 
+Formato de saída:
+ - Checklist acionável (itens verificáveis)
+ - Riscos + mitigação
+ -Commit sugerido:
+    -docs(quality): add observability, security and engineering checklist
+
+_______________________________________________________________________________________________
+PROMPT:
+AGENTE 5 — PLATFORM/QUALITY (STA)
+
+Você é o Agente 5. Sua missão é definir o mínimo necessário de qualidade e operação (STA) para o Payment Hub (simplificado), alinhado ao que já foi definido em requisitos e API.
+
+Produza:
+
+1.Observabilidade mínima:
+ - padrão de X-Correlation-Id (geração/propagação)
+ - logging estruturado (o que logar e o que NÃO logar)
+ - métricas conceituais (latência por endpoint, taxa de erro, replays)
+
+2.Segurança mínima:
+ - proposta de Guards (API key / JWT para admin)
+ - escopo do JWT (se aplicável)
+
+3.Checklist por camada Nest (itens verificáveis):
+ - Modules
+ - DTO/Validation/Pipes/Middlewares
+ - TypeORM
+ - Services
+ - Controllers
+ - Exception Filters
+ - Interceptors
+ - Guards
+ - Auth JWT
+4.STA — riscos operacionais e mitigação:
+ - replay/duplicidade
+ - inconsistência de estado
+ - conflitos de idempotência
+ - timeouts de provider (mesmo mock)
+ - auditoria mínima
+
+Saída:
+ - Conteúdo pronto para colar em docs/quality.md
+
+Não escreva código.
+No final, sugira 1 commit (Conventional Commit).
