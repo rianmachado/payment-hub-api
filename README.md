@@ -1,4 +1,4 @@
-# Payment Hub API (simplificado) — Baseline
+# 100% com IA. Payment Hub API (simplificado) — Baseline
 
 ## 1. Objetivo do projeto e escopo
 

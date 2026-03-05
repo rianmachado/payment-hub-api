@@ -1,0 +1,71 @@
+# =========================
+# Node / TypeScript / NestJS
+# =========================
+node_modules/
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# =========================
+# Environment variables
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# =========================
+# Testing / Coverage
+# =========================
+coverage/
+.nyc_output/
+jest-cache/
+
+# =========================
+# OS / Editor
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# Cursor
+# =========================
+.cursor/cache/
+.cursor/tmp/
+.cursor/logs/
+
+# Worktrees locais dos agentes (ignorar)
+.cursor/worktrees/agent-current/
+.cursor/worktrees/agent-new-1/
+
+# Versionar apenas regras, prompts e configs compartilhadas
+!.cursor/rules/
+!.cursor/prompts/
+!.cursor/settings.json
+
+# =========================
+# Docker (opcional)
+# =========================
+.docker/
+docker-compose.override.yml
+
+# =========================
+# Temporários
+# =========================
+tmp/
+temp/
+*.tmp
+*.bak

@@ -220,7 +220,7 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
 ### 3. Fluxo — Idempotência de pagamento (replay e conflitos)
 
 - **Objetivo**  
-  Garantir que múltiplas chamadas de criação de pagamento (retries, reenvios ou problemas de rede) não resultem em múltipliplas intenções inconsistentes, preservando a semântica “uma intenção de pagamento por chave idempotente”.
+  Garantir que múltiplas chamadas de criação de pagamento (retries, reenvios ou problemas de rede) não resultem em múltiplas intenções inconsistentes, preservando a semântica "uma intenção de pagamento por chave idempotente".
 
 - **Entradas relacionadas**  
   - `Idempotency-Key` no header de criação de pagamento.  
@@ -235,22 +235,22 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
   - **1. Recepção da requisição de criação**  
     - Gera/recebe `correlationId`.  
     - Busca se já existe registro para `(tenant, Idempotency-Key)`.  
-  - **2. Comportamento em caso de “first call”**  
+  - **2. Comportamento em caso de "first call"**  
     - Não existe registro → cria pagamento normalmente, liga `Idempotency-Key` ao `paymentId` e persiste.  
-    - Armazena também o “hash” ou subconjunto canônico do payload de negócio para comparação futura.  
-  - **3. Comportamento em caso de “replay compatível”**  
+    - Armazena também o "hash" ou subconjunto canônico do payload de negócio para comparação futura.  
+  - **3. Comportamento em caso de "replay compatível"**  
     - Registro encontrado para mesma `Idempotency-Key`.  
     - Payload atual é equivalente ao payload canônico armazenado.  
     - Retorna a mesma representação do pagamento já criado (201/200) sem criar novos registros.  
     - Garante que o estado do pagamento não seja alterado indevidamente por causa do replay.  
-  - **4. Comportamento em caso de “replay conflitante”**  
+  - **4. Comportamento em caso de "replay conflitante"**  
     - Registro encontrado, mas payload atual difere em campos relevantes (ex.: `amount`, `currency`, `payee`).  
     - Não altera o pagamento já existente.  
     - Retorna erro `409 Conflict` com payload de erro padronizado.  
 
 - **Saídas (response)**  
   - Em caso de replay compatível:  
-    - Mesmo shape de sucesso do fluxo “Criar pagamento”.  
+    - Mesmo shape de sucesso do fluxo "Criar pagamento".  
     - Pode incluir campo adicional de metadado: `idempotencyReplay: true` (se o contexto desejar).  
   - Em caso de conflito:  
     - `{ "code", "message", "details"?, "correlationId" }`  
@@ -304,7 +304,7 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
     - Escopo: única por `(tenant/cliente, Idempotency-Key)` em janela configurável (ex.: N dias).  
     - Associada 1:1 a um `paymentId`.  
   - **Business key de pagamento (conceito)**  
-    - Combinação lógica que identifica uma “intenção” de pagamento, por exemplo:  
+    - Combinação lógica que identifica uma "intenção" de pagamento, por exemplo:  
       - `tenantId`, `payer`, `payee`, `amount`, `currency`, `externalReference` (ajustar conforme contexto real).  
     - Usada para detecção adicional de duplicidade de negócio (além da `Idempotency-Key`).  
   - **Transição de estado do pagamento (exemplo mínimo)**  
@@ -318,5 +318,4 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
     - Invariantes de transição:  
       - Não é permitido voltar de um estado final (`SETTLED`, `FAILED`, `CANCELLED`) para estados anteriores.  
       - Alterações de `amount` e `currency` não são permitidas após `AUTHORIZED` (ou outro marco definido).  
-      - Requisição idempotente de criação não altera estado, apenas retorna o atual.  
-
+      - Requisição idempotente de criação não altera estado, apenas retorna o atual.
