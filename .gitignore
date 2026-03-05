@@ -1,0 +1,89 @@
+# =========================
+
+# Dependencies
+
+# =========================
+
+node_modules/
+
+# =========================
+
+# Build
+
+# =========================
+
+dist/
+build/
+*.tsbuildinfo
+
+# =========================
+
+# Environment
+
+# =========================
+
+.env
+.env.*
+!.env.example
+
+# =========================
+
+# Logs
+
+# =========================
+
+*.log
+logs/
+
+# =========================
+
+# Test
+
+# =========================
+
+coverage/
+
+# =========================
+
+# OS
+
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+
+# IDE
+
+# =========================
+
+.vscode/
+.idea/
+
+# =========================
+
+# Cursor (AI IDE)
+
+# =========================
+
+.cursor/*
+!.cursor/rules/
+!.cursor/prompts/
+!.cursor/settings.json
+
+# ignore machine-specific rules
+
+.cursor/rules/worktree*
+.cursor/cache/
+.cursor/tmp/
+.cursor/logs/
+
+# =========================
+
+# Temporary
+
+# =========================
+
+tmp/
+temp/
