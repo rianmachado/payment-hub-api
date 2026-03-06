@@ -3,14 +3,9 @@ alwaysApply: false
 
 # Worktrees relativos ao diretório raiz do projeto
 worktrees:
-  - name: Agente-0, Agente-1, Agente-2, Agente-3, Agente-4, Agente-5  
-    path: .cursor/worktrees/payment-hub-api/iyr
+  - name: Agente-0, Agente-1, Agente-2, Agente-3, Agente-4, Agente-5, Agente-6 
+    path: .cursor/worktrees/payment-hub-api-docs
     branch: docs/payment-flows
-
-  # Exemplo de novos agentes (cada um em branch própria)
-#  - name: new-agent-1
-#    path: .cursor/worktrees/agent-new-1
-#    branch: feature/agent-new-1
 
 notes:
   - Use paths relativos para portabilidade entre máquinas

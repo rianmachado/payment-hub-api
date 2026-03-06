@@ -9,7 +9,8 @@
   - Fluxo de consulta de pagamento  
     - Consulta por `paymentId` com retorno de estado atual e dados principais.  
   - Idempotência mínima  
-    - Tratamento de `Idempotency-Key` com comportamento de replay compatível (sem conflitos avançados ainda, se necessário).  
+    - Tratamento de `Idempotency-Key` com comportamento de replay compatível: primeira criação → 201; replay compatível → 200 OK; conflito de payload → 409 básico.
+    - Consulta por chave: `GET /payments/by-idempotency-key/{idempotencyKey}` (Fase A ou B).  
 
 - **Regras de negócio mínimas**  
   - Validações sintáticas e de campos obrigatórios.  
@@ -32,9 +33,9 @@
   - Implementação de modelo de estado completo (`AUTHORIZED`, `SETTLED`, `CANCELLED`, etc.).  
   - Tratamento completo de cancelamentos (se suportado pelo contexto).  
 
-- **Idempotência avançada**  
-  - Comparação canônica de payload para detecção de `PAYMENT_IDEMPOTENCY_CONFLICT`.  
-  - Estratégia clara de retenção/expiração de chaves idempotentes.  
+- **Idempotência avançada**
+  - Fase A: replay compatível + 409 básico quando payload difere. Fase B: comparação canônica completa de payload para detecção de `PAYMENT_IDEMPOTENCY_CONFLICT` e retenção/expiração de chaves idempotentes.
+  - `GET /payments/by-idempotency-key/{idempotencyKey}` disponível para consulta (incluir em Fase A ou B conforme prioridade).
 
 - **NFR reforçados**  
   - Métricas de negócio (pagamentos por status, por método, por tenant).  

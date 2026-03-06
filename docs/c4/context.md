@@ -24,6 +24,7 @@
 
 - **Payment Hub API (Software System) — sistema em foco**
   - Aplicação NestJS que expõe endpoints REST.
+  - Expõe, entre outros: `POST /payments`, `GET /payments/{paymentId}`, `GET /payments/by-idempotency-key/{idempotencyKey}`, e endpoint de saúde `GET /health` (conforme quality/OpenAPI).
   - Responsabilidades:
     - Receber, validar e autenticar requisições de criação/consulta de pagamento.
     - Aplicar regras de negócio mínimas e idempotência.
@@ -73,6 +74,9 @@
     - `X-Correlation-Id` (opcional; gerado pelo hub se ausente).
     - Body com `payer`, `payee`, `amount`, `currency`, `paymentMethod`, `externalReference`, etc.
   - `HTTP GET /payments/{paymentId}` (consulta de pagamento) com:
+    - `Authorization`.
+    - `X-Correlation-Id` (opcional).
+  - `HTTP GET /payments/by-idempotency-key/{idempotencyKey}` (consulta por chave de idempotência) com:
     - `Authorization`.
     - `X-Correlation-Id` (opcional).
   - Recebe como resposta:

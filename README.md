@@ -50,6 +50,7 @@ Centralizar e padronizar a orquestração de pagamentos de diferentes provedores
 - **Entrada (requisição HTTP)**
   - Método: **POST** `/payments` (rota ilustrativa).
   - Headers obrigatórios:
+    - `Authorization`: token de autenticação (ex.: Bearer JWT).
     - `Idempotency-Key`: chave única por intenção de pagamento.
     - `X-Correlation-Id`: identificador de correlação do fluxo de negócio.
   - Corpo contendo, em alto nível:
@@ -95,9 +96,10 @@ Centralizar e padronizar a orquestração de pagamentos de diferentes provedores
   - **Payment Hub API**: camadas de controller, service e repositório.
 
 - **Entrada (requisição HTTP)**
-  - Método: **GET** `/payments/{paymentId}` ou `/payments/by-business-key/{businessKey}` (design a definir).
+  - Método: **GET** `/payments/{paymentId}` ou `/payments/by-idempotency-key/{idempotencyKey}` (ver OpenAPI).
   - Headers recomendados:
-    - `X-Correlation-Id`: identificado/propagado para rastreio do request.
+    - `Authorization`: token de autenticação.
+    - `X-Correlation-Id`: identificador/propagado para rastreio do request.
 
 - **Etapas do fluxo (conceituais)**
   - **1. Recepção e validação de rota/parâmetros**

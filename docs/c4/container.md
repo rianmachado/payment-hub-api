@@ -63,6 +63,8 @@
   - HTTP/HTTPS:
     - `POST /payments`
     - `GET /payments/{paymentId}` (ou variante por `externalReference`)
+    - `GET /payments/by-idempotency-key/{idempotencyKey}`
+    - `GET /health` (healthcheck)
   - Headers:
     - `Authorization` (obrigatório).
     - `Idempotency-Key` (obrigatório na criação).

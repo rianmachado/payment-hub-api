@@ -28,7 +28,7 @@ Centralizar e padronizar a orquestração de pagamentos através de uma API REST
 ### Fluxos principais
 
 - **Criar pagamento**: validação → verificação de idempotência → criação de `payment` e `transaction` → chamada ao PSP → atualização de estado → resposta 201/200.
-- **Consultar pagamento**: busca por `paymentId` ou `businessKey` → retorno 200 ou erro 404 padronizado.
+- **Consultar pagamento**: busca por `paymentId`, por `externalReference`+cliente ou por chave de idempotência (`GET /payments/by-idempotency-key/{idempotencyKey}`); retorno 200 ou erro 404 padronizado. Ver [OpenAPI](api/openapi.md) para o endpoint de consulta por Idempotency-Key.
 - **Idempotência de pagamento**: uso de `Idempotency-Key` + `businessKey` → reutilização do resultado da primeira chamada → ausência de chamadas redundantes ao PSP.
 
 ### Glossário
@@ -47,6 +47,7 @@ Centralizar e padronizar a orquestração de pagamentos através de uma API REST
 - **Headers**: `Idempotency-Key` (criação), `X-Correlation-Id` (rastreio).
 - **Padrão de erro**: objeto `{ code, message, details?, correlationId }` com taxonomia interna de `code`.
 - **Status codes**: 200/201 para sucesso; 4xx para erros de cliente (400, 401, 403, 404, 409, 422, 429); 5xx para erros de servidor (500, 502/503 opcionais).
+- **Códigos de erro sugeridos** para 401/403/429/500/503: `AUTH_TOKEN_MISSING`, `AUTH_TOKEN_INVALID`, `AUTH_INSUFFICIENT_PERMISSION`, `RATE_LIMIT_EXCEEDED`, `INTERNAL_ERROR`, `SERVICE_UNAVAILABLE`.
 
 ### Trilho NestJS
 
@@ -95,13 +96,13 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
 - **Validações essenciais**  
   - **Autenticação e autorização**  
     - `Authorization` válido e com escopo para criar pagamentos.  
-  - **Idempotência**  
-    - `Idempotency-Key` presente, não vazio, dentro do limite de tamanho aceito.  
+  - **Idempotência**
+    - `Idempotency-Key` presente, não vazio, com tamanho máximo de 128 caracteres.
     - Para mesma `Idempotency-Key` + `cliente`, retornos consistentes conforme regras do fluxo de idempotência.  
   - **Body**  
     - Campos obrigatórios presentes (`payer`, `payee`, `amount`, `currency`, `paymentMethod.type`).  
     - `amount > 0`.  
-    - `currency` suportada pelo hub.  
+    - `currency` suportada pelo hub (lista mínima documentada: ex.: `BRL`, `USD`; ver openapi/requirements para lista completa).  
     - Consistência entre `paymentMethod.type` e campos específicos (ex.: chave PIX obrigatória se tipo = `PIX`).  
   - **Regras de negócio mínimas**  
     - Pagador e favorecido não podem ser a mesma entidade em cenários que o contexto proíba (ex.: PIX entre contas diferentes obrigatórias).  
@@ -151,8 +152,8 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
     - `code`: `PAYMENT_VALIDATION_ERROR`  
     - `message`: `"Dados de pagamento inválidos."`  
     - `details`: `{ "fieldErrors": [ { "field": "amount", "error": "MUST_BE_POSITIVE" } ] }`  
-  - **Idempotência — requisição repetida compatível**  
-    - Mesmo `Idempotency-Key` e mesma combinação de dados relevantes → retorna 201/200 com mesma representação do pagamento (sem erro).  
+  - **Idempotência — requisição repetida compatível**
+    - Primeira criação → **201 Created**; replay compatível (mesma `Idempotency-Key` e mesmo payload) → **200 OK** com mesma representação do pagamento (sem erro).
   - **Idempotência — conflito**  
     - `code`: `PAYMENT_IDEMPOTENCY_CONFLICT`  
     - `message`: `"Conflito de idempotência: requisição incompatível com chamada anterior."`  
@@ -255,8 +256,9 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
   - Em caso de conflito:  
     - `{ "code", "message", "details"?, "correlationId" }`  
 
-- **Status codes possíveis**  
-  - **201 Created / 200 OK**: primeira criação ou replay compatível.  
+- **Status codes possíveis**
+  - **201 Created**: primeira criação com sucesso.
+  - **200 OK**: replay compatível (mesma Idempotency-Key e mesmo payload; retorna o pagamento já criado).
   - **400 Bad Request**: `Idempotency-Key` ausente ou inválida quando obrigatória.  
   - **409 Conflict**: `Idempotency-Key` já usada com payload diferente.  
   - **500 Internal Server Error**: falha em verificar/registrar idempotência.  

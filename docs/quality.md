@@ -173,14 +173,14 @@ Documento de padrões mínimos de qualidade, observabilidade, segurança e check
 ### 3.4 Services
 
 - [ ] Controladores são finos: lógica de negócio reside em `Services`.
-- [ ] Serviços são focados em um propósito (ex.: `PaymentsService`, `ProviderGatewayService`, `ReplayService`).
+- [ ] Serviços são focados em um propósito (ex.: `PaymentsService`, `ProvidersService`, `IdempotencyService`).
 - [ ] Lógica de idempotência e transição de estado de pagamento é centralizada em serviços específicos, reutilizada por todos os fluxos (API, callbacks, replays).
 - [ ] Serviços lidam explicitamente com falhas de provider (timeouts, erros de rede, recusas de negócio).
 - [ ] Serviços são testáveis isoladamente (sem depender de HTTP ou infraestrutura externa sempre que possível).
 
 ### 3.5 Controllers
 
-- [ ] Cada rota está versionada (ex.: `v1`) conforme padrão da API.
+- [ ] Cada rota está versionada (ex.: prefixo `/v1`) conforme padrão da API, ou versionamento marcado como evolução futura no checklist.
 - [ ] Controllers apenas:
   - [ ] Recebem/parsing de DTOs.
   - [ ] Delegam para serviços.
