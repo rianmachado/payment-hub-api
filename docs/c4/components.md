@@ -8,8 +8,8 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
   - Módulo raiz.
   - Responsabilidades:
     - Compor todos os módulos de domínio e infraestrutura:
-      - `PaymentsModule`, `TransactionsModule`, `IdempotencyModule`,
-        `ProvidersModule`, `AuthModule`, `SharedModule/Observability`, etc.
+      - `ConfigModule`, `PaymentsModule`, `TransactionsModule`, `IdempotencyModule`,
+        `ProvidersModule`, `AuthModule`, `SharedModule/Observability`, `HealthModule`, etc.
     - Registrar middlewares globais (ex.: extração de `X-Correlation-Id`, logging básico).
     - Configurar providers compartilhados (ex.: conexões com DB, Redis).
 
@@ -29,6 +29,7 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
     - `PaymentsController` — endpoints HTTP:
       - `POST /payments` (criar).
       - `GET /payments/{paymentId}` (consultar).
+      - `GET /payments/by-idempotency-key/{idempotencyKey}` (consultar por chave de idempotência).
     - `PaymentsService` — orquestra lógica de alto nível de criação/consulta.
     - DTOs, pipes de validação, mapeadores.
   - Responsabilidades:
@@ -62,7 +63,7 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
 - **M6. ProvidersModule**
   - Módulo de abstração de **PSPs**.
   - Componentes:
-    - `ProvidersService` ou `ProviderGateway`.
+    - `ProvidersService` (contrato principal; ProviderGateway como alias ou implementação).
     - Adapters específicos de PSP (ex.: `MockPspClient` neste baseline).
   - Responsabilidades:
     - Expor método interno estável (ex.: `processPayment(request)`) para o domínio.
@@ -97,6 +98,13 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
   - Responsabilidades:
     - Fornecer operações de cache para `IdempotencyModule` e outros módulos.
     - Implementar locking simples baseado em TTL.
+
+- **M10. HealthModule**
+  - Módulo dedicado a healthcheck/actuator.
+  - Componentes:
+    - Endpoint `GET /health` para verificação de disponibilidade do serviço.
+  - Responsabilidades:
+    - Expor endpoint de saúde sem depender de lógica de domínio; usado por orquestradores e load balancers.
 
 ### 2. Integrações (HTTP / DB / Cache) em alto nível
 
@@ -311,7 +319,8 @@ Focado na lógica transversal de reuso de resultado.
   - `M6: ProvidersModule` — integração com PSP/Provider Mock.
   - `M7: Shared/ObservabilityModule` — logging, tracing, exception filters, middlewares.
   - `M8: PersistenceModule` — integração com banco de dados.
-  - `M9: CacheModule` — integração com Redis/Cache.
+  - `M9: CacheModule (IdempotencyStoreModule)` — integração com Redis/Cache.
+  - `M10: HealthModule` — healthcheck (GET /health).
 
 - **Relações principais**
   - `Cliente da API -> PaymentsModule (via AppModule + AuthModule + Shared)`.

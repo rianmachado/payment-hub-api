@@ -11,13 +11,16 @@ Este documento descreve o **modelo conceitual de dados e estado** do Payment Hub
 - **Descrição**: Representa a intenção de pagamento em nível de negócio (ex.: cobrança de uma fatura, pedido, assinatura).
 - **Campos essenciais**
   - `id` (UUID): identificador técnico do pagamento.
-  - `businessReference` (string): referência de negócio (ex.: `invoiceId`, `orderId`).
+  - `businessReference` (string): referência de negócio; recebe o valor de `externalReference` enviado na API (ex.: `invoiceId`, `orderId`).
   - `amount` (decimal): valor total do pagamento.
   - `currency` (string, ISO 4217): moeda (ex.: `BRL`, `USD`).
   - `status` (enum): estado atual do pagamento (ex.: `PENDING`, `AUTHORIZED`, `CAPTURED`, `CANCELLED`, `FAILED`).
-  - `customerId` (string): identificação do cliente no domínio do hub ou do sistema origem.
-  - `merchantId` (string): identificação do comerciante/estabelecimento.
+  - `customerId` (string): identificador do pagador; originado de `payer.id` ou `payer.externalId` do request da API.
+  - `merchantId` (string): identificador do favorecido; originado de `payee.id` ou `payee.externalId` do request da API.
   - `providerId` (string): identificação do provedor de pagamento selecionado (ex.: PSP, gateway).
+  - `idempotencyKey` (string, opcional): valor do header `Idempotency-Key` usado na criação.
+  - `correlationId` (string, opcional): identificador de correlação para rastreio (ex.: valor de `X-Correlation-Id`).
+  - `completedAt` (datetime, opcional): data/hora em que o pagamento atingiu estado final (ex.: CAPTURED, FAILED, CANCELLED).
   - `createdAt` (datetime): data/hora de criação.
   - `updatedAt` (datetime): data/hora de última atualização.
   - `metadata` (JSON genérico): informações adicionais não estruturadas (tags de negócio, notas, etc.).
@@ -63,6 +66,7 @@ Este documento descreve o **modelo conceitual de dados e estado** do Payment Hub
 - **Descrição**: Representa o controle de idempotência de requisições recebidas pelo Payment Hub API.
 - **Campos essenciais**
   - `id` (UUID): identificador técnico do registro.
+  - `tenantId` (string): identificador do tenant/cliente; obrigatório para multi-tenant.
   - `idempotencyKey` (string): chave técnica recebida no cabeçalho `Idempotency-Key`.
   - `scope` (string): escopo lógico da key (ex.: `CREATE_PAYMENT`, `CAPTURE_PAYMENT`, `REFUND_PAYMENT`).
   - `businessKey` (string/JSON): chave(s) de negócio associada(s) (ex.: `invoiceId`, ou combinação normalizada).
@@ -76,7 +80,7 @@ Este documento descreve o **modelo conceitual de dados e estado** do Payment Hub
   - `updatedAt` (datetime).
 - **Chaves/uniques e índices conceituais**
   - Chave primária: `id`.
-  - Unique: (`idempotencyKey`, `scope`) — por API/escopo.
+  - Unique: (`tenantId`, `idempotencyKey`, `scope`) — por tenant e escopo (multi-tenant).
   - Índices:
     - Índice em `businessKey` para análise de conflitos de negócio.
     - Índice em `expiresAt` para limpeza (TTL/GC).
@@ -145,9 +149,15 @@ Este documento descreve o **modelo conceitual de dados e estado** do Payment Hub
   - `INITIATED` → `FAILED`
     - Evento: `validation_failed` (regras de negócio ou campos inválidos).
   - `CAPTURED` → (sem transição de estado principal; operações de `REFUND` não reabrem o pagamento, mas geram transações associadas e, opcionalmente, estados complementares como `REFUNDED` ou `PARTIALLY_REFUNDED` se o domínio exigir).
-- **Eventos externos relevantes**
+  - **Eventos externos relevantes**
   - `webhook_received` (com payload do provedor).
   - `manual_action` (operações manuais via backoffice, ex.: cancelar, reprocessar).
+
+- **Mapeamento estados internos ↔ API**
+  - A API expõe um subconjunto de estados com nomes padronizados; o modelo interno pode usar nomes adicionais. Mapeamento sugerido:
+    - `CREATED` (API) ↔ `INITIATED` (interno): intenção registrada, ainda não enviada ao provedor.
+    - `SETTLED` (API) ↔ `CAPTURED` (interno): pagamento concluído com sucesso.
+    - `EXPIRED` (interno) → exposto como `FAILED` ou status específico na API, conforme política.
 
 ### 2.2. State machine conceitual de `Transaction`
 

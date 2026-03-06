@@ -83,7 +83,7 @@ Registra uma nova intenção de pagamento. Sujeito a idempotência: mesma `Idemp
 | `payee.id` | string | Condicional | ID interno do favorecido. |
 | `payee.externalId` | string | Condicional | ID externo do favorecido. Obrigatório `payee.id` **ou** `payee.externalId`. |
 | `amount` | number (decimal) | Sim | Valor do pagamento; deve ser > 0. |
-| `currency` | string | Sim | Moeda ISO 4217 (ex.: `BRL`, `USD`). |
+| `currency` | string | Sim | Moeda ISO 4217; lista mínima suportada pelo hub: `BRL`, `USD` (outras conforme configuração). |
 | `paymentMethod` | object | Sim | Meio de pagamento. |
 | `paymentMethod.type` | string | Sim | Tipo: ex. `PIX`, `CARD`, `BOLETO`. |
 | `paymentMethod.*` | * | Condicional | Campos específicos por tipo (ex.: chave PIX, token de cartão). |
@@ -115,22 +115,22 @@ Registra uma nova intenção de pagamento. Sujeito a idempotência: mesma `Idemp
 
 #### Response — Sucesso (replay compatível)
 
-**Status:** `200 OK` ou `201 Created` (conforme convenção)
+**Status:** `200 OK`
 
-Mesmo body do sucesso acima; pode incluir `idempotencyReplay: true`. Nenhuma nova chamada ao PSP.
+Primeira criação → **201 Created**; replay compatível (mesma Idempotency-Key e mesmo payload) → **200 OK**. Mesmo body do sucesso acima; pode incluir `idempotencyReplay: true`. Nenhuma nova chamada ao PSP.
 
 #### Response — Erros
 
 | Status | Cenário | `code` (exemplo) |
 |--------|---------|-------------------|
 | `400 Bad Request` | Payload inválido, `Idempotency-Key` ausente/inválida | `IDEMPOTENCY_KEY_REQUIRED`, `PAYMENT_VALIDATION_ERROR` |
-| `401 Unauthorized` | Token inválido ou ausente | (código de auth) |
-| `403 Forbidden` | Sem permissão para criar pagamentos | (código de auth) |
+| `401 Unauthorized` | Token inválido ou ausente | `AUTH_TOKEN_MISSING`, `AUTH_TOKEN_INVALID` |
+| `403 Forbidden` | Sem permissão para criar pagamentos | `AUTH_INSUFFICIENT_PERMISSION` |
 | `409 Conflict` | Mesma idempotency key com payload diferente | `PAYMENT_IDEMPOTENCY_CONFLICT` |
 | `422 Unprocessable Entity` | Regra de negócio rejeitou (limite, bloqueio, etc.) | `PAYMENT_BUSINESS_RULE_VIOLATION` |
-| `429 Too Many Requests` | Rate limit excedido | (código de rate limit) |
-| `500 Internal Server Error` | Erro inesperado | (código interno) |
-| `503 Service Unavailable` | Dependência crítica indisponível | (código interno) |
+| `429 Too Many Requests` | Rate limit excedido | `RATE_LIMIT_EXCEEDED` |
+| `500 Internal Server Error` | Erro inesperado | `INTERNAL_ERROR` |
+| `503 Service Unavailable` | Dependência crítica indisponível | `SERVICE_UNAVAILABLE` |
 
 #### Exemplo — Request (criar pagamento)
 
@@ -254,11 +254,11 @@ Recupera o estado atual e dados principais de um pagamento. O cliente deve ter a
 | Status | Cenário | `code` (exemplo) |
 |--------|---------|-------------------|
 | `400 Bad Request` | `paymentId` em formato inválido | `PAYMENT_VALIDATION_ERROR` |
-| `401 Unauthorized` | Token inválido ou ausente | (código de auth) |
+| `401 Unauthorized` | Token inválido ou ausente | `AUTH_TOKEN_MISSING`, `AUTH_TOKEN_INVALID` |
 | `403 Forbidden` | Cliente sem acesso ao pagamento | `PAYMENT_ACCESS_DENIED` |
 | `404 Not Found` | Pagamento não encontrado | `PAYMENT_NOT_FOUND` |
-| `429 Too Many Requests` | Rate limit | (código de rate limit) |
-| `500 Internal Server Error` | Erro inesperado | (código interno) |
+| `429 Too Many Requests` | Rate limit | `RATE_LIMIT_EXCEEDED` |
+| `500 Internal Server Error` | Erro inesperado | `INTERNAL_ERROR` |
 
 #### Exemplo — Request
 
@@ -331,11 +331,11 @@ Mesmo body do `GET /payments/{paymentId}` (representação do recurso `Payment`)
 | Status | Cenário | `code` (exemplo) |
 |--------|---------|-------------------|
 | `400 Bad Request` | Chave vazia ou formato inválido | `PAYMENT_VALIDATION_ERROR` |
-| `401 Unauthorized` | Token inválido ou ausente | (código de auth) |
+| `401 Unauthorized` | Token inválido ou ausente | `AUTH_TOKEN_MISSING`, `AUTH_TOKEN_INVALID` |
 | `403 Forbidden` | Cliente sem acesso ao recurso | `PAYMENT_ACCESS_DENIED` |
 | `404 Not Found` | Nenhum pagamento associado à chave (ou expirado) | `PAYMENT_NOT_FOUND` ou `IDEMPOTENCY_KEY_NOT_FOUND` |
-| `429 Too Many Requests` | Rate limit | (código de rate limit) |
-| `500 Internal Server Error` | Erro inesperado | (código interno) |
+| `429 Too Many Requests` | Rate limit | `RATE_LIMIT_EXCEEDED` |
+| `500 Internal Server Error` | Erro inesperado | `INTERNAL_ERROR` |
 
 #### Exemplo — Request
 
@@ -360,6 +360,20 @@ Corpo idêntico ao do `GET /payments/{paymentId}` (exemplo acima).
   "correlationId": "770e8400-e29b-41d4-a716-446655440002"
 }
 ```
+
+---
+
+### 4.4. Healthcheck
+
+**`GET /health`**
+
+Endpoint de saúde do serviço (HealthModule). Usado por orquestradores e load balancers para verificar disponibilidade.
+
+#### Response — Sucesso
+
+**Status:** `200 OK`
+
+Body típico: `{ "status": "ok" }` ou equivalente (conforme implementação).
 
 ---
 
@@ -393,6 +407,12 @@ Corpo idêntico ao do `GET /payments/{paymentId}` (exemplo acima).
 | `PAYMENT_NOT_FOUND` | Pagamento não existe ou não acessível para o cliente. |
 | `PAYMENT_ACCESS_DENIED` | Cliente autenticado sem permissão para o recurso. |
 | `IDEMPOTENCY_KEY_NOT_FOUND` | (Opcional) Nenhum registro para a chave em `GET by-idempotency-key`. |
+| `AUTH_TOKEN_MISSING` | Header `Authorization` ausente. |
+| `AUTH_TOKEN_INVALID` | Token inválido ou expirado. |
+| `AUTH_INSUFFICIENT_PERMISSION` | Token válido mas sem permissão para a operação (403). |
+| `RATE_LIMIT_EXCEEDED` | Limite de requisições excedido (429). |
+| `INTERNAL_ERROR` | Erro inesperado do servidor (500). |
+| `SERVICE_UNAVAILABLE` | Dependência crítica indisponível (503). |
 
 ---
 
