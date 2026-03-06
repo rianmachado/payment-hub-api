@@ -252,3 +252,29 @@ Antes de partir para modelagem C4 (Context, Container, Component, Code), os segu
 - [ ] **Convenções técnicas definidas** — Padrão de erro `{ code, message, details?, correlationId }`; uso de correlation-id e idempotency-key padronizados; decisões iniciais sobre autenticação futura (JWT) e rate limiting.
 
 - [ ] **Trilho de implementação em NestJS acordado** — Ordem de fixação (Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Controllers → Exception Filters → Interceptors → Guards → Auth JWT) aceita como plano de execução.
+
+---
+
+## Implementation Plan (guided)
+
+O plano de implementação segue a ordem de fixação NestJS definida em [docs/requirements.md](docs/requirements.md) e detalhada em [docs/INTEGRATION-REVIEW.md](docs/INTEGRATION-REVIEW.md):
+
+1. **Modules** — Estrutura modular (App, Config, Auth, Payments, Transactions, Idempotency, Providers, Shared/Observability, Persistence, Cache, Health). *Ref.: container.md, components.md, quality.md.*
+
+2. **DTO / Validation / Pipes / Middlewares** — DTOs alinhados ao OpenAPI; ValidationPipe global; middlewares para correlation-id e logging. *Ref.: requirements.md, openapi.md, quality.md.*
+
+3. **TypeORM** — Entidades Payment, Transaction, IdempotencyRecord (e opcionais); migrations; transações; sem synchronize em não-test. *Ref.: data-state.md, requirements.md, quality.md.*
+
+4. **Services** — PaymentsService, IdempotencyService, TransactionsService, ProvidersService; orquestração e regras de negócio. *Ref.: requirements.md, components.md, data-state.md, quality.md.*
+
+5. **Controllers** — PaymentsController: POST /payments, GET /payments/:paymentId, GET /payments/by-idempotency-key/:idempotencyKey; códigos HTTP conforme OpenAPI. *Ref.: openapi.md, requirements.md, context.md, container.md, quality.md.*
+
+6. **Exception Filters** — Filtro global; formato { code, message, details?, correlationId }; mapeamento de exceções para status e códigos. *Ref.: requirements.md, openapi.md, quality.md.*
+
+7. **Interceptors** — Logging, timeout (providers), métricas por endpoint. *Ref.: requirements.md, quality.md, components.md.*
+
+8. **Guards** — Proteção de rotas (JWT; opcional API Key); roles/metadata por rota. *Ref.: requirements.md, quality.md, components.md.*
+
+9. **Auth JWT** — Validação de token (iss, aud, exp, iat); contexto de identidade e tenant; rotação de chaves. *Ref.: requirements.md, quality.md, context.md.*
+
+Cada etapa deve ser implementada e testada antes de avançar; os documentos em `docs/` são a fonte de verdade para contratos, estados e convenções.

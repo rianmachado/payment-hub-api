@@ -1,0 +1,37 @@
+----------------------------------------
+STEP FINAL — INTEGRATION REVIEW (CONSISTÊNCIA + TRILHO DE IMPLEMENTAÇÃO)
+----------------------------------------
+
+Responsável por:
+
+ - Validar consistência entre requirements, C4, data/state, openapi e quality
+ - Gerar um “roteiro de commits” para começar a implementação seguindo a ordem de fixação
+ - Sem código — apenas plano
+
+Cria/Atualiza:
+ - Adiciona seção “Implementation Plan” no README.md
+
+_______________________________________________________________________________________________
+PROMPT:
+INTEGRATION REVIEW — CONSISTENCY + IMPLEMENTATION PLAN
+
+Você é o Integrador Final. Verifique consistência entre:
+
+ - docs/requirements.md
+ - docs/c4/context.md, container.md, components.md
+ - docs/api/openapi.md
+ - docs/quality.md
+ - docs/roadmap.md
+
+Tarefas:
+1. Aponte inconsistências e sugira correções mínimas (nomes, campos, endpoints, status codes, estados).
+2. Gere um plano de implementação (sem código) em formato de commit log, seguindo a ordem de fixação Nest:
+Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Controllers → Exception Filters → Interceptors → Guards → Auth JWT
+
+3. Para cada etapa, cite quais arquivos docs sustentam aquela etapa (ex.: openapi, requirements, data/state).
+
+Saída:
+ - Uma seção pronta para colar no README.md: "Implementation Plan (guided)"
+ - Lista de commits (Conventional Commits) para iniciar a construção
+
+Não escreva código.
