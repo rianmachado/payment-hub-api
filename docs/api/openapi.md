@@ -28,7 +28,7 @@ Especificação descritiva da API REST do Payment Hub (simplificado), alinhada a
 
 ### 2.2. Formato e limites
 
-- **Idempotency-Key**: string, não vazia, tamanho máximo conforme política (ex.: 128 caracteres). Única por `(tenant/cliente, Idempotency-Key)` na janela configurada.
+- **Idempotency-Key**: string, não vazia, tamanho máximo conforme política (ex.: 128 caracteres). Única por (escopo do **cliente autenticado**, Idempotency-Key) na janela configurada. Evolução futura: multi-tenant com `tenantId`.
 - **X-Correlation-Id**: string (ex.: UUID), opcional; retornado em respostas e no corpo de erros (`correlationId`).
 
 ---
@@ -74,12 +74,14 @@ Registra uma nova intenção de pagamento. Sujeito a idempotência: mesma `Idemp
 
 #### Request body (schema)
 
+*Vocabulário da API:* `payer` e `payee` são objetos do contrato HTTP. Internamente o hub normaliza para `customerId` (pagador) e `merchantId` (favorecido); nas respostas, esses valores são expostos novamente como `payer` e `payee`.
+
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
-| `payer` | object | Sim | Identificação do pagador. |
+| `payer` | object | Sim | Identificação do pagador (contrato da API; interno: `customerId`). |
 | `payer.id` | string | Condicional | ID interno do pagador (uso com `payer.externalId` conforme política). |
 | `payer.externalId` | string | Condicional | ID externo do pagador. Obrigatório `payer.id` **ou** `payer.externalId`. |
-| `payee` | object | Sim | Identificação do favorecido. |
+| `payee` | object | Sim | Identificação do favorecido (contrato da API; interno: `merchantId`). |
 | `payee.id` | string | Condicional | ID interno do favorecido. |
 | `payee.externalId` | string | Condicional | ID externo do favorecido. Obrigatório `payee.id` **ou** `payee.externalId`. |
 | `amount` | number (decimal) | Sim | Valor do pagamento; deve ser > 0. |
@@ -305,7 +307,7 @@ X-Correlation-Id: 660e8400-e29b-41d4-a716-446655440001
 
 **`GET /payments/by-idempotency-key/{idempotencyKey}`**
 
-Recupera o pagamento previamente criado associado à chave de idempotência. Útil para confirmar resultado após retry ou para obter o `paymentId` quando o cliente só dispõe da `Idempotency-Key`. Escopo: mesmo tenant/cliente da criação.
+Recupera o pagamento previamente criado associado à chave de idempotência. Útil para confirmar resultado após retry ou para obter o `paymentId` quando o cliente só dispõe da `Idempotency-Key`. Escopo: mesmo cliente autenticado (escopo do token) da criação.
 
 #### Headers
 
@@ -418,7 +420,16 @@ Body típico: `{ "status": "ok" }` ou equivalente (conforme implementação).
 
 ## 7. Estados de pagamento (API)
 
-Valores possíveis de `status` expostos na API, alinhados ao fluxo de criação e consulta:
+Valores possíveis de `status` expostos na API (vocabulário externo). O modelo interno ([data-state.md](../data-state.md)) usa nomes como `INITIATED`, `CAPTURED`, `EXPIRED`; o mapeamento é:
+
+| API (resposta) | Interno (persistência) |
+|----------------|-------------------------|
+| `CREATED`      | `INITIATED`             |
+| `PENDING`      | `PENDING`               |
+| `AUTHORIZED`   | `AUTHORIZED`            |
+| `SETTLED`      | `CAPTURED`              |
+| `FAILED`       | `FAILED` ou `EXPIRED`   |
+| `CANCELLED`    | `CANCELLED`             |
 
 - **CREATED** — Intenção registrada, ainda não enviada ao provedor.
 - **PENDING** — Em processamento junto ao provedor.
@@ -426,5 +437,3 @@ Valores possíveis de `status` expostos na API, alinhados ao fluxo de criação 
 - **SETTLED** — Pagamento concluído com sucesso.
 - **FAILED** — Falha irrecuperável.
 - **CANCELLED** — Cancelado após criação.
-
-*(O modelo interno em [data-state.md](../data-state.md) pode usar nomes adicionais como `INITIATED`, `CAPTURED`, `EXPIRED`; o mapeamento para esses valores de API fica a cargo da implementação.)*
