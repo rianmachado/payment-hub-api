@@ -1,59 +1,31 @@
 # Integration Review — Consistency + Implementation Plan
 
-Revisão de consistência entre `requirements.md`, C4 (`context.md`, `container.md`, `components.md`), `openapi.md`, `quality.md`, `roadmap.md` e `data-state.md`.
+Revisão de consistência entre `requirements.md`, C4 (`context.md`, `container.md`, `components.md`), `openapi.md`, `quality.md`, `roadmap.md` e `data-state.md`. Este documento é mantido como revisão viva: pendências resolvidas são movidas para a seção 1.2; apenas itens em aberto permanecem em 1.1.
 
 ---
 
-## 1. Inconsistências e correções mínimas sugeridas
+## 1. Estado da revisão
 
-### 1.1 Nomes e campos
+### 1.1. Pendências ainda abertas
 
-| Onde | Inconsistência | Correção sugerida |
-|------|----------------|-------------------|
-| **data-state** vs **requirements/openapi** | Payment usa `customerId`/`merchantId`; API usa objetos `payer`/`payee` com `id` ou `externalId`. | Em data-state: documentar que `customerId` = identificador do pagador (de `payer.id` ou `payer.externalId`), `merchantId` = favorecido (de `payee`). |
-| **data-state** | Payment não lista `completedAt`, `idempotencyKey`, `correlationId`. | Adicionar: `completedAt` (datetime, opcional), `idempotencyKey` (string, opcional), `correlationId` (string, opcional). |
-| **data-state** | IdempotencyRecord unique `(idempotencyKey, scope)` sem tenant. | Para multi-tenant: unique `(tenantId, idempotencyKey, scope)` e incluir campo `tenantId` em IdempotencyRecord. |
-| **data-state** vs **API** | Estados internos: `INITIATED`, `CAPTURED`, `EXPIRED`; API: `CREATED`, `SETTLED`, etc. | Documentar mapeamento: `CREATED`↔`INITIATED`, `SETTLED`↔`CAPTURED`; `EXPIRED`→`FAILED` ou status específico. |
-| **requirements** vs **openapi** | business key como combinação lógica; API envia `externalReference`. | Manter `externalReference` na API; em data-state usar `businessReference` em Payment recebendo valor de `externalReference`. |
+| Onde | Item | Ação sugerida |
+|------|------|----------------|
+| **openapi** vs **quality** | Rotas versionadas (ex.: `/v1`); openapi não usa prefixo. | Decidir: adotar prefixo `/v1` em openapi e requirements ou marcar versionamento como evolução futura. |
+| **quality.md** | Cita "ReplayService"; codebase usa IdempotencyService. | Alinhar quality.md: usar IdempotencyService; remover ou renomear referência a ReplayService. |
+| **quality.md** | ProviderGatewayService vs ProvidersService. | Unificar terminologia em quality: `ProvidersService` como contrato principal. |
+| **README** (se existir fluxo 2.1) | Headers obrigatórios sem `Authorization`. | Incluir `Authorization` nos headers obrigatórios de criação/consulta. |
 
-### 1.2 Endpoints e rotas
+### 1.2. Pendências já resolvidas (harmonização documental)
 
-| Onde | Inconsistência | Correção sugerida |
-|------|----------------|-------------------|
-| **requirements** | Consultar pagamento cita só `paymentId` ou `externalReference+cliente`; não cita consulta por idempotency key. | Incluir referência ao fluxo de consulta por Idempotency-Key ou apontar para openapi (GET by-idempotency-key). |
-| **context.md / container.md** | Só listam `POST /payments` e `GET /payments/{paymentId}`. | Incluir `GET /payments/by-idempotency-key/{idempotencyKey}` nas relações Cliente → Payment Hub API. |
-| **openapi** vs **quality** | quality exige rotas versionadas (ex.: v1); openapi não usa `/v1`. | Decidir: se versionamento for adotado, usar prefixo `/v1` em openapi e requirements; senão, marcar versionamento como futuro no checklist. |
-| **quality / container** | HealthModule e health citados em quality; não aparecem em container/components. | Incluir HealthModule em components (ex.: M10) e endpoint GET /health em openapi/context. |
-
-### 1.3 Status codes e convenções
-
-| Onde | Inconsistência | Correção sugerida |
-|------|----------------|-------------------|
-| **requirements** e **openapi** | Replay idempotente: "201/200" e "200 OK ou 201 Created (conforme convenção)". | Unificar: "Primeira criação → 201 Created; replay compatível → 200 OK" em requirements e openapi. |
-| **openapi / requirements** | 401/403/429/500/503 sem códigos de erro (`code`) definidos. | Sugerir taxonomia: `AUTH_TOKEN_MISSING`, `AUTH_TOKEN_INVALID`, `AUTH_INSUFFICIENT_PERMISSION`, `RATE_LIMIT_EXCEEDED`, `INTERNAL_ERROR`, `SERVICE_UNAVAILABLE`. |
-
-### 1.4 Serviços e componentes
-
-| Onde | Inconsistência | Correção sugerida |
-|------|----------------|-------------------|
-| **quality 3.4** | Cita "ReplayService"; components e requirements usam apenas IdempotencyService. | Alinhar: usar IdempotencyService; remover ou renomear ReplayService. |
-| **quality 3.4** | Cita "ProviderGatewayService"; components usa "ProvidersService ou ProviderGateway". | Unificar: `ProvidersService` como contrato principal; ProviderGateway como alias ou implementação. |
-| **components** | M9: "IdempencyStoreModule" (typo). | Corrigir para `IdempotencyStoreModule`. |
-
-### 1.5 Idempotência e roadmap
-
-| Onde | Inconsistência | Correção sugerida |
-|------|----------------|-------------------|
-| **requirements** | "Idempotency-Key dentro do limite de tamanho aceito" sem valor. | Especificar em requirements (e openapi): ex. "tamanho máximo 128 caracteres". |
-| **roadmap** | Fase A: "replay compatível (sem conflitos avançados ainda)"; openapi já descreve 409 e conflito. | Esclarecer: Fase A = replay compatível + 409 básico; Fase B = comparação canônica completa e retenção/expiração. Incluir GET by-idempotency-key em Fase A ou B. |
-
-### 1.6 Autorização e outros
-
-| Onde | Inconsistência | Correção sugerida |
-|------|----------------|-------------------|
-| **README** (fluxo 2.1) | Headers obrigatórios listam só Idempotency-Key e X-Correlation-Id. | Incluir `Authorization` nos headers obrigatórios de criação/consulta. |
-| **requirements / openapi** | "currency suportada pelo hub" sem lista. | Documentar lista mínima (ex.: BRL, USD) em requirements ou openapi. |
-| **components** | AppModule não cita ConfigModule. | Incluir ConfigModule na composição do AppModule em components. |
+- **Vocabulário API vs interno**: Em `data-state.md` e `openapi.md` está documentado o mapeamento `payer`/`payee` (contrato HTTP) ↔ `customerId`/`merchantId` (modelo interno). Requirements referencia normalização na criação.
+- **Estados**: Mapeamento completo interno ↔ API documentado em `data-state.md` (CREATED↔INITIATED, SETTLED↔CAPTURED, etc.) e em `openapi.md` §7. Estado inicial na criação explicado em requirements.
+- **Consulta por idempotency key**: Requirements cita `GET /payments/by-idempotency-key/{idempotencyKey}` no fluxo de consulta; context.md e container.md já listam o endpoint; roadmap consolidou o endpoint na **Fase A**.
+- **Idempotency-Key**: Tamanho máximo 128 caracteres em requirements e openapi; escopo definido como **cliente autenticado** (evolução multi-tenant opcional) em requirements, data-state e openapi.
+- **Roadmap**: Fase A = criação, consulta por paymentId e por idempotency-key, replay + 409 básico. Fase B = idempotência avançada (comparação canônica, retenção/expiração).
+- **Payment (data-state)**: Entidade já inclui `completedAt`, `idempotencyKey`, `correlationId`. IdempotencyRecord com escopo (tenantId/clientScope) e unique documentado; MVP = escopo do cliente autenticado.
+- **ConfigModule**: Incluído na composição do AppModule em `components.md` (M1). HealthModule e GET /health em context, container e openapi.
+- **Replay 201/200**: Unificado em requirements e openapi: primeira criação → 201; replay compatível → 200 OK. Taxonomia de códigos de erro (AUTH_*, RATE_LIMIT_EXCEEDED, etc.) em openapi e requirements.
+- **Moedas**: Lista mínima (BRL, USD) referenciada em requirements e openapi.
 
 ---
 
