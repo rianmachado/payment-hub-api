@@ -51,7 +51,7 @@
 - **Cache/Idempotency Store (Redis ou Similar) (Optional External System)**
   - Armazenamento chave-valor de baixa latência para suporte à idempotência e rate limiting.
   - Responsabilidades:
-    - Manter mapeamentos rápidos de `(tenant, Idempotency-Key) -> paymentId / hash de payload`.
+    - Manter mapeamentos rápidos de (escopo do cliente autenticado, `Idempotency-Key`) → `paymentId` / hash de payload.
     - Ajudar a prevenir race conditions em cenários de alta concorrência.
 
 - **Infra de Observabilidade / Logging (External System)**
@@ -72,7 +72,7 @@
     - `Authorization` (obrigatório).
     - `Idempotency-Key` (obrigatório na criação).
     - `X-Correlation-Id` (opcional; gerado pelo hub se ausente).
-    - Body com `payer`, `payee`, `amount`, `currency`, `paymentMethod`, `externalReference`, etc.
+    - Body com `payer`, `payee` (vocabulário da API; internamente normalizados para `customerId`/`merchantId`), `amount`, `currency`, `paymentMethod`, `externalReference`, etc.
   - `HTTP GET /payments/{paymentId}` (consulta de pagamento) com:
     - `Authorization`.
     - `X-Correlation-Id` (opcional).
@@ -84,7 +84,7 @@
 
 - **Payment Hub API ↔ Provider de Identidade / Auth**
   - Valida tokens presentes em `Authorization`.
-  - Usa claims/escopos para autorização e multi-tenant.
+  - Usa claims/escopos para autorização (escopo do cliente autenticado; evolução: multi-tenant).
 
 - **Payment Hub API ↔ Banco de Dados de Pagamentos**
   - Escritas:
@@ -97,7 +97,7 @@
 
 - **Payment Hub API ↔ Cache/Idempotency Store**
   - Escritas:
-    - Registro rápido de `(tenant, Idempotency-Key) -> paymentId / hash de payload`.
+    - Registro rápido de (escopo do cliente autenticado, `Idempotency-Key`) → `paymentId` / hash de payload.
   - Leituras:
     - Verificação rápida se a chave idempotente já foi usada.
     - Comparação de payload para detecção de conflito (`PAYMENT_IDEMPOTENCY_CONFLICT`).
@@ -109,7 +109,7 @@
 
 - **Payment Hub API → Infra de Observabilidade / Logging**
   - Emissão de logs estruturados e métricas mínimas:
-    - `correlationId`, `paymentId`, `tenantId`, `status`, `errorCode`, latência, etc.
+    - `correlationId`, `paymentId`, escopo do cliente, `status`, `errorCode`, latência, etc.
 
 ### 5. Boundaries de contexto
 

@@ -26,16 +26,16 @@
 - **C3. Banco de Dados de Pagamentos (Relational Database)**
   - Banco relacional (Postgres, SQLite, etc.).
   - Responsável por persistir:
-    - Entidades `Payment` (incluindo `status`, `amount`, `payer`, `payee`, `idempotencyKey`, `externalReference`, `tenantId`, timestamps).
+    - Entidades `Payment` (incluindo `status`, `amount`, `customerId`, `merchantId` — expostos na API como `payer`/`payee` —, `idempotencyKey`, `externalReference`, escopo do cliente, timestamps).
     - Entidades `Transaction` (status, PSP, referências, timestamps).
   - Fornece:
     - Consistência forte das escritas.
-    - Consultas eficientes por `paymentId`, `externalReference`, `tenant`, etc.
+    - Consultas eficientes por `paymentId`, `externalReference`, escopo do cliente, etc.
 
 - **C4. Cache / Idempotency Store (Redis ou similar)**
   - Armazenamento chave-valor de baixa latência.
   - Responsável por:
-    - Manter índice de idempotência: `(tenant, Idempotency-Key) -> paymentId / hash de payload`.
+    - Manter índice de idempotência: (escopo do cliente autenticado, `Idempotency-Key`) → `paymentId` / hash de payload.
     - Apoiar detecção de replays e conflitos.
     - Possível base para rate limiting.
 
@@ -77,11 +77,11 @@
     - Persistência de vínculos de idempotência (se persistidos em DB).
   - Leituras:
     - Consulta de pagamentos para leitura (fluxo de consulta).
-    - Uso de filtros por tenant, externalReference, etc.
+    - Uso de filtros por escopo do cliente, externalReference, etc.
 
 - **C2 ↔ C4: Payment Hub API ↔ Cache / Idempotency Store**
   - Escritas:
-    - Registro imediato de `(tenant, Idempotency-Key) -> paymentId / hash de payload`.
+    - Registro imediato de (escopo do cliente autenticado, `Idempotency-Key`) → `paymentId` / hash de payload.
     - Criação de locks simples (chaves com TTL) para evitar corrida.
   - Leituras:
     - Verificação rápida de existência da chave idempotente.
@@ -100,7 +100,7 @@
 
 - **C2 → C7: Payment Hub API → Stack de Observabilidade / Logging**
   - Envio de:
-    - Logs estruturados (incluindo `correlationId`, `paymentId`, `tenantId`).
+    - Logs estruturados (incluindo `correlationId`, `paymentId`, escopo do cliente).
     - Métricas de contadores/latências/erros.
 
 ### 3. Boundaries e responsabilidades por contêiner
