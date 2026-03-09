@@ -168,3 +168,31 @@
   - `C2 -> C5`: chamadas de processamento de pagamento.
   - `C2 -> C6`: validação de tokens.
   - `C2 -> C7`: envio de logs e métricas.
+
+### 5. Diagrama C4 — Contêineres (Mermaid)
+
+O diagrama abaixo pode ser renderizado em ferramentas que suportam Mermaid. O código-fonte também está em `docs/c4/diagrams/container.mmd` para geração de imagens.
+
+```mermaid
+C4Container
+    title Visão de Contêineres — Payment Hub API
+    Person(cliente, "Cliente da API", "E-commerce, BFF, serviços internos")
+    Container_Boundary(hub, "Payment Hub API") {
+        Container(api, "Payment Hub API", "NestJS", "Endpoints REST, idempotência, orquestração PSP")
+    }
+    ContainerDb(db, "Banco de Dados de Pagamentos", "Postgres/SQLite", "Payment, Transaction")
+    Container_Ext(cache, "Cache / Idempotency Store", "Redis", "Chaves idempotentes (escopo cliente)")
+    Container_Ext(psp, "PSP / Provider Mock", "HTTP", "Processamento de pagamento")
+    Container_Ext(auth, "Provider de Identidade / Auth", "OAuth2/JWT", "Validação de tokens")
+    Container_Ext(obs, "Stack de Observabilidade", "ELK/Loki/Prometheus", "Logs e métricas")
+    Rel(cliente, api, "POST/GET /payments, GET /health")
+    Rel(api, db, "Leitura/escrita Payment, Transaction")
+    Rel(api, cache, "Chaves idempotentes e locks")
+    Rel(api, psp, "Processar pagamento")
+    Rel(api, auth, "Validação de token")
+    Rel(api, obs, "Logs, métricas")
+```
+
+**Imagem gerada (PNG):**
+
+![Diagrama C4 — Contêineres](diagrams/container.png)
