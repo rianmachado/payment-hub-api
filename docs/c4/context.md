@@ -24,7 +24,7 @@
 
 - **Payment Hub API (Software System) — sistema em foco**
   - Aplicação NestJS que expõe endpoints REST.
-  - Expõe, entre outros: `POST /payments`, `GET /payments/{paymentId}`, `GET /payments/by-idempotency-key/{idempotencyKey}`, e endpoint de saúde `GET /health` (conforme quality/OpenAPI).
+  - Expõe, entre outros: `POST /v1/payments`, `GET /v1/payments/{paymentId}`, `GET /v1/payments/by-idempotency-key/{idempotencyKey}`, e endpoint de saúde `GET /v1/health` ou `GET /health` (conforme OpenAPI).
   - Responsabilidades:
     - Receber, validar e autenticar requisições de criação/consulta de pagamento.
     - Aplicar regras de negócio mínimas e idempotência.
@@ -51,7 +51,7 @@
 - **Cache/Idempotency Store (Redis ou Similar) (Optional External System)**
   - Armazenamento chave-valor de baixa latência para suporte à idempotência e rate limiting.
   - Responsabilidades:
-    - Manter mapeamentos rápidos de (escopo do cliente autenticado, `Idempotency-Key`) → `paymentId` / hash de payload.
+    - Manter mapeamentos rápidos de (**escopo do cliente autenticado** + `Idempotency-Key`) → `paymentId` / hash de payload. *O MVP não assume multi-tenant explícito; o escopo de idempotência é o cliente autenticado. Em evolução futura esse escopo poderá ser materializado como `tenantId`.*
     - Ajudar a prevenir race conditions em cenários de alta concorrência.
 
 - **Infra de Observabilidade / Logging (External System)**

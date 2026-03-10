@@ -63,7 +63,7 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
 - **M6. ProvidersModule**
   - Módulo de abstração de **PSPs**.
   - Componentes:
-    - `ProvidersService` (contrato principal; ProviderGateway como alias ou implementação).
+    - `ProvidersService` (contrato principal de integração com PSPs).
     - Adapters específicos de PSP (ex.: `MockPspClient` neste baseline).
   - Responsabilidades:
     - Expor método interno estável (ex.: `processPayment(request)`) para o domínio.
