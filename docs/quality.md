@@ -173,14 +173,14 @@ Documento de padrões mínimos de qualidade, observabilidade, segurança e check
 ### 3.4 Services
 
 - [ ] Controladores são finos: lógica de negócio reside em `Services`.
-- [ ] Serviços são focados em um propósito (ex.: `PaymentsService`, `ProvidersService`, `IdempotencyService`).
+- [ ] Serviços são focados em um propósito (ex.: `PaymentsService`, `ProvidersService` — contrato principal de integração com PSPs —, `IdempotencyService` — controle de idempotência; não usar nomes alternativos como ReplayService ou ProviderGatewayService).
 - [ ] Lógica de idempotência e transição de estado de pagamento é centralizada em serviços específicos, reutilizada por todos os fluxos (API, callbacks, replays).
 - [ ] Serviços lidam explicitamente com falhas de provider (timeouts, erros de rede, recusas de negócio).
 - [ ] Serviços são testáveis isoladamente (sem depender de HTTP ou infraestrutura externa sempre que possível).
 
 ### 3.5 Controllers
 
-- [ ] Cada rota está versionada (ex.: prefixo `/v1`) conforme padrão da API, ou versionamento marcado como evolução futura no checklist.
+- [ ] Cada rota está versionada com prefixo `/v1` conforme padrão da API documentado em [openapi.md](api/openapi.md).
 - [ ] Controllers apenas:
   - [ ] Recebem/parsing de DTOs.
   - [ ] Delegam para serviços.
@@ -229,7 +229,7 @@ Documento de padrões mínimos de qualidade, observabilidade, segurança e check
   - Persistir chave de idempotência com:
     - Estado atual da operação.
     - Resultado retornado (para poder reutilizar resposta).
-  - Garantir unicidade da combinação (`idempotencyKey` + tipo de operação + `merchantId`).
+  - Garantir unicidade da combinação **escopo do cliente autenticado** + `Idempotency-Key` (+ tipo de operação quando aplicável). *O MVP não assume multi-tenant explícito; o escopo de idempotência é o cliente autenticado. Em evolução futura esse escopo poderá ser materializado como `tenantId`.*
   - Em replay detectado, **não reprocessar** a operação; reutilizar a resposta já registrada e logar evento de replay.
 
 ### 4.2 Inconsistência de estado
@@ -251,7 +251,7 @@ Documento de padrões mínimos de qualidade, observabilidade, segurança e check
   - Em caso de divergência:
     - Registrar log de `WARN`/`ERROR` com detalhes não sensíveis.
     - Retornar erro claro de conflito de idempotência para o cliente.
-  - Documentar claramente o escopo da idempotência (por ex.: por `merchantId` + operação + `idempotencyKey`).
+  - Documentar claramente o escopo da idempotência: **escopo do cliente autenticado** + `Idempotency-Key` (evolução futura: multi-tenant com `tenantId`).
 
 ### 4.4 Timeouts de provider (mesmo em mock)
 
