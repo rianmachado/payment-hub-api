@@ -28,7 +28,7 @@ Centralizar e padronizar a orquestração de pagamentos através de uma API REST
 ### Fluxos principais
 
 - **Criar pagamento**: validação → verificação de idempotência → criação de `payment` e `transaction` → chamada ao PSP → atualização de estado → resposta 201/200.
-- **Consultar pagamento**: busca por `paymentId`, por `externalReference`+cliente ou por chave de idempotência (`GET /payments/by-idempotency-key/{idempotencyKey}`); retorno 200 ou erro 404 padronizado. Ver [OpenAPI](api/openapi.md) para o endpoint de consulta por Idempotency-Key.
+- **Consultar pagamento**: busca por `paymentId`, por `externalReference` no escopo do cliente ou por chave de idempotência (`GET /v1/payments/by-idempotency-key/{idempotencyKey}`); retorno 200 ou erro 404 padronizado. Ver [OpenAPI](api/openapi.md) para os endpoints versionados.
 - **Idempotência de pagamento**: uso de `Idempotency-Key` + `businessKey` → reutilização do resultado da primeira chamada → ausência de chamadas redundantes ao PSP.
 
 ### Glossário
@@ -182,7 +182,7 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
   - Validação de formato do `paymentId`.  
 
 - **Processamento (alto nível)**  
-  - Localiza o pagamento pelo identificador (índice por `paymentId`, por `externalReference` no escopo do cliente, ou por chave de idempotência — ver endpoint `GET /payments/by-idempotency-key/{idempotencyKey}`).  
+  - Localiza o pagamento pelo identificador (índice por `paymentId`, por `externalReference` no escopo do cliente, ou por chave de idempotência — ver endpoint `GET /v1/payments/by-idempotency-key/{idempotencyKey}`).  
   - Aplica filtros de autorização (o cliente autenticado pode ver este pagamento?).  
   - Monta DTO de resposta na linguagem da API (`payer`, `payee`, `status` exposto) a partir do modelo interno; inclui status atual e últimos timestamps relevantes.  
   - Opcionalmente agrega dados de eventos de status (se `expand` solicitado e suportado).  
@@ -275,7 +275,7 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
 ## Requisitos não funcionais
 
 - **Observabilidade**  
-  - Logs estruturados com: `correlationId`, `paymentId`, `tenantId`, `status`, `errorCode` (quando houver).  
+  - Logs estruturados com: `correlationId`, `paymentId`, escopo do cliente, `status`, `errorCode` (quando houver).  
   - Métricas mínimas:  
     - Contador de pagamentos criados por status final.  
     - Latência de criação e consulta.  
@@ -290,7 +290,7 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
 - **Segurança**  
   - Comunicação somente sobre TLS (HTTPS).  
   - Autenticação obrigatória via esquema padronizado (ex.: OAuth2/JWT), de acordo com o Context Pack.  
-  - Autorização por escopo/role e por tenant.  
+  - Autorização por escopo/role (escopo do cliente autenticado; evolução: multi-tenant).  
   - Dados sensíveis (ex.: dados de cartão) nunca são retornados em claro, apenas tokens/aliases.  
   - Logs não podem registrar dados confidenciais (apenas identificadores ou versões mascaradas).  
 

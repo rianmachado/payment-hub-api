@@ -38,4 +38,35 @@ Ordem recomendada de commits (Conventional Commits) após as alterações de har
 
 ---
 
-*Gerado pelo agente Documentation Harmonizer. Não implementa código; apenas documentação.*
+## Harmonização final (Documentation Final Harmonizer)
+
+7. **docs(api): add v1 version prefix to endpoints**
+   - Base URL e todos os endpoints com prefixo `/v1`: POST/GET /v1/payments, GET /v1/payments/by-idempotency-key/{idempotencyKey}, GET /v1/health.
+   - Exemplos de request e tabelas de status/códigos de erro atualizados.
+
+8. **docs(quality): standardize idempotency scope to authenticated client**
+   - Escopo de idempotência: **escopo do cliente autenticado** + Idempotency-Key (removido merchantId).
+   - Nota MVP: não assume multi-tenant; evolução futura tenantId.
+   - Checklist § 3.4: IdempotencyService e ProvidersService como nomes padrão; § 3.5: rotas versionadas /v1.
+
+9. **docs(c4): align terminology removing tenant-centric wording**
+   - context.md e container.md: nota explícita sobre escopo do cliente autenticado e MVP; rotas /v1.
+   - components.md: ProvidersService como contrato principal (sem alias ProviderGateway).
+   - Texto e descrições usando apenas "escopo do cliente autenticado" onde antes havia tenant/merchant.
+
+10. **docs(readme): document authorization and correlation id headers**
+    - Seção Security Model: Authorization obrigatório, Idempotency-Key para criação, X-Correlation-Id para rastreabilidade.
+    - Headers obrigatórios em fluxos 2.1 e 2.2; referência a rotas /v1 e OpenAPI.
+
+11. **docs(review): finalize integration review and close resolved issues**
+    - § 1.1: Pendências abertas substituídas por resumo dos ajustes aplicados (versionamento, nomes de serviços, escopo idempotência).
+    - § 1.2: Inclusão de itens resolvidos (mapeamento payer/payee, estados, endpoint by-idempotency-key, README Security Model).
+    - Plano de implementação e commits sugeridos atualizados para /v1 e escopo do cliente autenticado.
+
+12. **docs(requirements,roadmap): align observability and metrics with client scope**
+    - requirements: logs com escopo do cliente (não tenantId); autorização por escopo do cliente.
+    - roadmap: métricas por escopo do cliente (evolução: por tenant); requirements referências a GET /v1/... por idempotency-key.
+
+---
+
+*Gerado pelo agente Documentation Harmonizer e Documentation Final Harmonizer. Não implementa código; apenas documentação.*

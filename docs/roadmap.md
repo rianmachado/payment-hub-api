@@ -39,7 +39,7 @@
   - Fase B: evoluções opcionais — comparação canônica completa de payload, retenção/expiração configurável de chaves, replay avançado ou políticas de TTL/limpeza.
 
 - **NFR reforçados**  
-  - Métricas de negócio (pagamentos por status, por método, por tenant).  
+  - Métricas de negócio (pagamentos por status, por método, por escopo do cliente; evolução: por tenant).  
   - Dashboards básicos de observabilidade.  
   - Rate limiting por cliente + proteção contra bursts.  
   - Melhorias de segurança (hardening de headers, CSP, validação mais robusta de tokens, etc., conforme contexto).  
