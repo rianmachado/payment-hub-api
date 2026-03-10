@@ -10,7 +10,7 @@ Especificação descritiva da API REST do Payment Hub (simplificado), alinhada a
 |-------|--------|
 | **Título** | Payment Hub API |
 | **Descrição** | API REST para criação e consulta de pagamentos, com idempotência e rastreabilidade via correlation-id. |
-| **Base URL** | `https://api.example.com` (ou variável por ambiente) |
+| **Base URL** | `https://api.example.com/v1` (ou variável por ambiente; endpoints abaixo já incluem o prefixo `/v1`). |
 | **Protocolo** | HTTPS |
 | **Autenticação** | Bearer (JWT/OAuth2) via header `Authorization` |
 
@@ -23,12 +23,12 @@ Especificação descritiva da API REST do Payment Hub (simplificado), alinhada a
 | Header | Obrigatório | Onde | Descrição |
 |--------|-------------|------|-----------|
 | `Authorization` | Sim | Todos os endpoints | Token de autenticação (ex.: `Bearer <token>`). |
-| `Idempotency-Key` | Sim | `POST /payments` | Chave única por combinação de negócio em janela de tempo; evita duplicação. |
+| `Idempotency-Key` | Sim | `POST /v1/payments` | Chave única por escopo do cliente autenticado em janela de tempo; evita duplicação. |
 | `X-Correlation-Id` | Não (recomendado) | Todos | Identificador de rastreio ponta a ponta; se ausente, o hub gera um. |
 
 ### 2.2. Formato e limites
 
-- **Idempotency-Key**: string, não vazia, tamanho máximo conforme política (ex.: 128 caracteres). Única por (escopo do **cliente autenticado**, Idempotency-Key) na janela configurada. Evolução futura: multi-tenant com `tenantId`.
+- **Idempotency-Key**: string, não vazia, tamanho máximo conforme política (ex.: 128 caracteres). Única por (**escopo do cliente autenticado** + Idempotency-Key) na janela configurada. *O MVP não assume multi-tenant explícito; o escopo de idempotência é o cliente autenticado. Em evolução futura esse escopo poderá ser materializado como `tenantId`.*
 - **X-Correlation-Id**: string (ex.: UUID), opcional; retornado em respostas e no corpo de erros (`correlationId`).
 
 ---
@@ -59,9 +59,9 @@ Todas as respostas de erro (4xx/5xx) seguem o mesmo schema:
 
 ### 4.1. Criar pagamento
 
-**`POST /payments`**
+**`POST /v1/payments`**
 
-Registra uma nova intenção de pagamento. Sujeito a idempotência: mesma `Idempotency-Key` + mesmo payload → mesma resposta (201/200) sem nova cobrança ao PSP.
+Registra uma nova intenção de pagamento. Sujeito a idempotência: mesma `Idempotency-Key` no mesmo escopo do cliente autenticado + mesmo payload → mesma resposta (201/200) sem nova cobrança ao PSP.
 
 #### Headers
 
@@ -137,7 +137,7 @@ Primeira criação → **201 Created**; replay compatível (mesma Idempotency-Ke
 #### Exemplo — Request (criar pagamento)
 
 ```http
-POST /payments HTTP/1.1
+POST /v1/payments HTTP/1.1
 Host: api.example.com
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 Idempotency-Key: ord-12345-inv-67890
@@ -207,9 +207,9 @@ Content-Type: application/json
 
 ### 4.2. Consultar pagamento por ID
 
-**`GET /payments/{paymentId}`**
+**`GET /v1/payments/{paymentId}`**
 
-Recupera o estado atual e dados principais de um pagamento. O cliente deve ter acesso ao recurso (multi-tenant/escopo).
+Recupera o estado atual e dados principais de um pagamento. O cliente autenticado deve ter acesso ao recurso (escopo do token).
 
 #### Headers
 
@@ -265,7 +265,7 @@ Recupera o estado atual e dados principais de um pagamento. O cliente deve ter a
 #### Exemplo — Request
 
 ```http
-GET /payments/a1b2c3d4-e5f6-7890-abcd-ef1234567890 HTTP/1.1
+GET /v1/payments/a1b2c3d4-e5f6-7890-abcd-ef1234567890 HTTP/1.1
 Host: api.example.com
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 X-Correlation-Id: 660e8400-e29b-41d4-a716-446655440001
@@ -305,9 +305,9 @@ X-Correlation-Id: 660e8400-e29b-41d4-a716-446655440001
 
 ### 4.3. Consultar pagamento por chave de idempotência
 
-**`GET /payments/by-idempotency-key/{idempotencyKey}`**
+**`GET /v1/payments/by-idempotency-key/{idempotencyKey}`**
 
-Recupera o pagamento previamente criado associado à chave de idempotência. Útil para confirmar resultado após retry ou para obter o `paymentId` quando o cliente só dispõe da `Idempotency-Key`. Escopo: mesmo cliente autenticado (escopo do token) da criação.
+Recupera o pagamento previamente criado associado à chave de idempotência. Útil para confirmar resultado após retry ou para obter o `paymentId` quando o cliente só dispõe da `Idempotency-Key`. Escopo: mesmo escopo do cliente autenticado da criação.
 
 #### Headers
 
@@ -326,7 +326,7 @@ Recupera o pagamento previamente criado associado à chave de idempotência. Út
 
 **Status:** `200 OK`
 
-Mesmo body do `GET /payments/{paymentId}` (representação do recurso `Payment`).
+Mesmo body do `GET /v1/payments/{paymentId}` (representação do recurso `Payment`).
 
 #### Response — Erros
 
@@ -342,7 +342,7 @@ Mesmo body do `GET /payments/{paymentId}` (representação do recurso `Payment`)
 #### Exemplo — Request
 
 ```http
-GET /payments/by-idempotency-key/ord-12345-inv-67890 HTTP/1.1
+GET /v1/payments/by-idempotency-key/ord-12345-inv-67890 HTTP/1.1
 Host: api.example.com
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 X-Correlation-Id: 770e8400-e29b-41d4-a716-446655440002
@@ -350,7 +350,7 @@ X-Correlation-Id: 770e8400-e29b-41d4-a716-446655440002
 
 #### Exemplo — Response 200
 
-Corpo idêntico ao do `GET /payments/{paymentId}` (exemplo acima).
+Corpo idêntico ao do `GET /v1/payments/{paymentId}` (exemplo acima).
 
 #### Exemplo — Response 404 (chave sem pagamento)
 
@@ -367,7 +367,7 @@ Corpo idêntico ao do `GET /payments/{paymentId}` (exemplo acima).
 
 ### 4.4. Healthcheck
 
-**`GET /health`**
+**`GET /v1/health`** (ou `GET /health` sem prefixo, conforme implementação)
 
 Endpoint de saúde do serviço (HealthModule). Usado por orquestradores e load balancers para verificar disponibilidade.
 
@@ -381,7 +381,7 @@ Body típico: `{ "status": "ok" }` ou equivalente (conforme implementação).
 
 ## 5. Códigos de status por cenário (resumo)
 
-| Cenário | POST /payments | GET /payments/{paymentId} | GET /payments/by-idempotency-key/{key} |
+| Cenário | POST /v1/payments | GET /v1/payments/{paymentId} | GET /v1/payments/by-idempotency-key/{key} |
 |---------|----------------|---------------------------|----------------------------------------|
 | Sucesso (criação) | 201 | — | — |
 | Sucesso (replay idempotente) | 200 (ou 201) | — | — |
@@ -403,7 +403,7 @@ Body típico: `{ "status": "ok" }` ou equivalente (conforme implementação).
 | code | Uso típico |
 |------|------------|
 | `PAYMENT_VALIDATION_ERROR` | Campos obrigatórios ausentes, formato inválido, amount ≤ 0, etc. |
-| `IDEMPOTENCY_KEY_REQUIRED` | `Idempotency-Key` ausente ou vazia em `POST /payments`. |
+| `IDEMPOTENCY_KEY_REQUIRED` | `Idempotency-Key` ausente ou vazia em `POST /v1/payments`. |
 | `PAYMENT_IDEMPOTENCY_CONFLICT` | Mesma `Idempotency-Key` com payload diferente. |
 | `PAYMENT_BUSINESS_RULE_VIOLATION` | Limite excedido, cliente bloqueado, pagador = favorecido quando proibido, etc. |
 | `PAYMENT_NOT_FOUND` | Pagamento não existe ou não acessível para o cliente. |
