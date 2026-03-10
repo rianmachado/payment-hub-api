@@ -156,28 +156,8 @@
   - `Payment Hub API -> PSP / Provider`: orquestração de tentativas de pagamento.
   - `Payment Hub API -> Infra de Observabilidade / Logging`: envio de logs/métricas com `correlationId`.
 
-### 7. Diagrama C4 — Contexto (Mermaid)
+### 7. Diagrama C4 — Contexto (draw.io)
 
-O diagrama abaixo pode ser renderizado em ferramentas que suportam Mermaid (GitHub, GitLab, MkDocs, etc.). O código-fonte também está em `docs/c4/diagrams/context.mmd` para geração de imagens.
-
-```mermaid
-C4Context
-    title Contexto do Sistema — Payment Hub API
-    Person(cliente, "Cliente da API", "Sistemas que consomem a API (e-commerce, BFF, etc.)")
-    System(hub, "Payment Hub API", "API REST NestJS: criação/consulta de pagamentos, idempotência, correlation-id")
-    System_Ext(auth, "Provider de Identidade / Auth", "Valida tokens Authorization")
-    System_Ext(psp, "PSP / Provider Mock", "Processa tentativas de pagamento")
-    System_Ext(db, "Banco de Dados de Pagamentos", "Persiste Payment e Transaction")
-    System_Ext(cache, "Cache / Idempotency Store", "Chaves idempotentes (escopo do cliente)")
-    System_Ext(obs, "Infra de Observabilidade / Logging", "Logs e métricas")
-    Rel(cliente, hub, "POST/GET /payments, GET by-idempotency-key")
-    Rel(hub, auth, "Valida token e escopos")
-    Rel(hub, db, "Leitura/escrita Payment, Transaction")
-    Rel(hub, cache, "Chaves idempotentes")
-    Rel(hub, psp, "Processar pagamento")
-    Rel(hub, obs, "Logs, métricas, correlationId")
-```
-
-**Imagem gerada (PNG):**
+O diagrama está em formato draw.io (XML) em `docs/c4/diagrams/context.drawio`, com **sequências numeradas** em cada ligação. Pode ser editado em [app.diagrams.net](https://app.diagrams.net) ou no Draw.io desktop. A imagem PNG é gerada a partir do `.drawio` (ver README na pasta `diagrams/`).
 
 ![Diagrama C4 — Contexto](diagrams/context.png)

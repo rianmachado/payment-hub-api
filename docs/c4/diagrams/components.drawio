@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2025-01-01T00:00:00.000Z" agent="Payment Hub Docs" version="22.0.0" etag="components" type="device">
+  <diagram name="C4-Componentes" id="components-c4">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Boundary: Payment Hub API -->
+        <mxCell id="boundary" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="20" y="60" width="680" height="520" as="geometry"/>
+        </mxCell>
+        <mxCell id="boundary-label" value="Payment Hub API (módulos NestJS)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=12;spacingLeft=4;" vertex="1" parent="1">
+          <mxGeometry x="24" y="64" width="300" height="20" as="geometry"/>
+        </mxCell>
+        <!-- Components inside boundary -->
+        <mxCell id="app" value="AppModule&#xa;Composição, Config, Health" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="60" y="100" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="auth" value="AuthModule&#xa;JWT, Guards" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="220" y="100" width="100" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="payments" value="PaymentsModule&#xa;Controller, PaymentsService, DTOs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="260" y="220" width="180" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="tx" value="TransactionsModule&#xa;TransactionsService" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="200" y="340" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="idem" value="IdempotencyModule&#xa;IdempotencyService" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="380" y="340" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="prov" value="ProvidersModule&#xa;ProvidersService, MockPspClient" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="380" y="420" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="shared" value="Shared/ObservabilityModule&#xa;Logging, ExceptionFilter, CorrelationId" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="60" y="420" width="200" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="persist" value="PersistenceModule&#xa;TypeORM, repositórios" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="260" y="480" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="cache" value="CacheModule&#xa;Redis, chaves idempotentes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="480" y="220" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <!-- External: DB -->
+        <mxCell id="db" value="Banco de Dados&#xa;Postgres/SQLite&#xa;Payment, Transaction" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="280" y="620" width="140" height="70" as="geometry"/>
+        </mxCell>
+        <!-- External: Redis -->
+        <mxCell id="redis" value="Redis&#xa;Idempotency Store" style="shape=component;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="520" y="340" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- External: PSP -->
+        <mxCell id="psp" value="PSP Mock&#xa;Provedor de pagamento" style="shape=component;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="580" y="420" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- External: Auth -->
+        <mxCell id="authExt" value="Provider de Identidade&#xa;OAuth2/JWT" style="shape=component;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="340" y="40" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <!-- External: Obs -->
+        <mxCell id="obs" value="Observabilidade&#xa;Logs/Métricas" style="shape=component;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="520" width="130" height="50" as="geometry"/>
+        </mxCell>
+        <!-- Edges (numbered) -->
+        <mxCell id="e1" value="1. Verifica/reutiliza por&#xa;Idempotency-Key" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="payments" target="idem">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="2. Cria/atualiza Transaction" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="payments" target="tx">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="3. Processa pagamento" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="payments" target="prov">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" value="4. Persiste Payment" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="payments" target="persist">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" value="5. Chaves idempotentes" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="idem" target="cache">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" value="6. Consulta/registra vínculo" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="idem" target="persist">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e7" value="7. Persiste Transaction" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="tx" target="persist">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e8" value="8. Chamada ao PSP" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="prov" target="psp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" value="9. Valida token" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="auth" target="authExt">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e10" value="10. Leitura/escrita" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="persist" target="db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e11" value="11. Chaves e locks" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="cache" target="redis">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e12" value="12. Logs, métricas" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="shared" target="obs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Title -->
+        <mxCell id="title" value="C4 — Nível 3: Visão de Componentes (Payment Hub API)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="450" height="30" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

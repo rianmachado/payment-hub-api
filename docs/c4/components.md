@@ -331,43 +331,8 @@ Focado na lógica transversal de reuso de resultado.
   - `AuthModule -> Provider de Identidade`.
   - `Shared/ObservabilityModule -> Stack de Observabilidade`.
 
-### 6. Diagrama C4 — Componentes (Mermaid)
+### 6. Diagrama C4 — Componentes (draw.io)
 
-O diagrama abaixo mostra os módulos NestJS dentro do contêiner Payment Hub API e suas dependências. O código-fonte está em `docs/c4/diagrams/components.mmd` para geração de imagens.
-
-```mermaid
-C4Component
-    title Visão de Componentes — Payment Hub API (módulos NestJS)
-    Container_Boundary(hub, "Payment Hub API") {
-        Component(app, "AppModule", "NestJS", "Composição, ConfigModule, HealthModule")
-        Component(auth, "AuthModule", "NestJS", "JWT, Guards")
-        Component(payments, "PaymentsModule", "NestJS", "Controller, PaymentsService, DTOs")
-        Component(tx, "TransactionsModule", "NestJS", "TransactionsService")
-        Component(idem, "IdempotencyModule", "NestJS", "IdempotencyService")
-        Component(prov, "ProvidersModule", "NestJS", "ProvidersService, MockPspClient")
-        Component(shared, "Shared/ObservabilityModule", "NestJS", "Logging, ExceptionFilter, CorrelationId")
-        Component(persist, "PersistenceModule", "NestJS", "TypeORM, repositórios")
-        Component(cache, "CacheModule", "NestJS", "Redis, chaves idempotentes")
-    }
-    ContainerDb(db, "Banco de Dados", "Postgres/SQLite", "Payment, Transaction")
-    Container_Ext(redis, "Redis", "Cache", "Idempotency Store")
-    Container_Ext(psp, "PSP Mock", "HTTP", "Provedor de pagamento")
-    Container_Ext(authExt, "Provider de Identidade", "OAuth2/JWT", "Validação de tokens")
-    Container_Ext(obs, "Observabilidade", "Logs/Métricas", "Stack de monitoramento")
-    Rel(payments, idem, "Verifica/reutiliza por Idempotency-Key")
-    Rel(payments, tx, "Cria/atualiza Transaction")
-    Rel(payments, prov, "Processa pagamento")
-    Rel(payments, persist, "Persiste Payment")
-    Rel(idem, cache, "Chaves idempotentes")
-    Rel(idem, persist, "Consulta/registra vínculo")
-    Rel(tx, persist, "Persiste Transaction")
-    Rel(prov, psp, "Chamada ao PSP")
-    Rel(auth, authExt, "Valida token")
-    Rel(persist, db, "Leitura/escrita")
-    Rel(cache, redis, "Chaves e locks")
-    Rel(shared, obs, "Logs, métricas")
-```
-
-**Imagem gerada (PNG):**
+O diagrama mostra os módulos NestJS dentro do contêiner Payment Hub API e suas dependências, com **sequências numeradas** em cada ligação. Fonte: `docs/c4/diagrams/components.drawio`. Edição em [app.diagrams.net](https://app.diagrams.net). PNG gerado a partir do `.drawio` (ver README em `diagrams/`).
 
 ![Diagrama C4 — Componentes](diagrams/components.png)
