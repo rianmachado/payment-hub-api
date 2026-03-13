@@ -1,59 +1,33 @@
 # Integration Review — Consistency + Implementation Plan
 
-Revisão de consistência entre `requirements.md`, C4 (`context.md`, `container.md`, `components.md`), `openapi.md`, `quality.md`, `roadmap.md` e `data-state.md`.
+Revisão de consistência entre `requirements.md`, C4 (`context.md`, `container.md`, `components.md`), `openapi.md`, `quality.md`, `roadmap.md` e `data-state.md`. Este documento é mantido como revisão viva: pendências resolvidas são movidas para a seção 1.2; apenas itens em aberto permanecem em 1.1.
+
+**Fonte de verdade para agentes de IA:** Os documentos em `docs/` (requirements.md, api/openapi.md, data-state.md, c4/*.md, quality.md, roadmap.md, INTEGRATION-REVIEW.md) constituem a **fonte de verdade única** para implementação do Payment Hub API. Agentos devem seguir o plano de implementação guiada (§2), as referências cruzadas entre documentos e os contratos/estados aqui definidos. A implementação guiada pode ser iniciada; não há pendências críticas bloqueantes.
 
 ---
 
-## 1. Inconsistências e correções mínimas sugeridas
+## 1. Estado da revisão
 
-### 1.1 Nomes e campos
+### 1.1. Pendências ainda abertas (nenhuma — pronto para implementação guiada)
 
-| Onde | Inconsistência | Correção sugerida |
-|------|----------------|-------------------|
-| **data-state** vs **requirements/openapi** | Payment usa `customerId`/`merchantId`; API usa objetos `payer`/`payee` com `id` ou `externalId`. | Em data-state: documentar que `customerId` = identificador do pagador (de `payer.id` ou `payer.externalId`), `merchantId` = favorecido (de `payee`). |
-| **data-state** | Payment não lista `completedAt`, `idempotencyKey`, `correlationId`. | Adicionar: `completedAt` (datetime, opcional), `idempotencyKey` (string, opcional), `correlationId` (string, opcional). |
-| **data-state** | IdempotencyRecord unique `(idempotencyKey, scope)` sem tenant. | Para multi-tenant: unique `(tenantId, idempotencyKey, scope)` e incluir campo `tenantId` em IdempotencyRecord. |
-| **data-state** vs **API** | Estados internos: `INITIATED`, `CAPTURED`, `EXPIRED`; API: `CREATED`, `SETTLED`, etc. | Documentar mapeamento: `CREATED`↔`INITIATED`, `SETTLED`↔`CAPTURED`; `EXPIRED`→`FAILED` ou status específico. |
-| **requirements** vs **openapi** | business key como combinação lógica; API envia `externalReference`. | Manter `externalReference` na API; em data-state usar `businessReference` em Payment recebendo valor de `externalReference`. |
+Nenhuma pendência crítica em aberto após a harmonização final. Os itens abaixo foram objeto de ajuste e **já estão refletidos** nos documentos; a implementação guiada (§2) pode ser iniciada:
 
-### 1.2 Endpoints e rotas
+- **Alinhamento de versionamento de API**: Prefixo `/v1` adotado em [openapi.md](api/openapi.md) para todos os endpoints de pagamento e health; quality.md e C4 referenciam rotas versionadas.
+- **Harmonização de nomes de serviços**: Padronizado em toda a documentação: `IdempotencyService` (não ReplayService), `ProvidersService` como contrato principal (não ProviderGatewayService); quality.md § 3.4 e INTEGRATION-REVIEW referenciam explicitamente.
+- **Escopo de idempotência**: Padronizado para **escopo do cliente autenticado** + Idempotency-Key em quality.md, openapi.md, context.md, container.md e data-state; nota explícita: *O MVP não assume multi-tenant; em evolução futura o escopo poderá ser materializado como tenantId.*
 
-| Onde | Inconsistência | Correção sugerida |
-|------|----------------|-------------------|
-| **requirements** | Consultar pagamento cita só `paymentId` ou `externalReference+cliente`; não cita consulta por idempotency key. | Incluir referência ao fluxo de consulta por Idempotency-Key ou apontar para openapi (GET by-idempotency-key). |
-| **context.md / container.md** | Só listam `POST /payments` e `GET /payments/{paymentId}`. | Incluir `GET /payments/by-idempotency-key/{idempotencyKey}` nas relações Cliente → Payment Hub API. |
-| **openapi** vs **quality** | quality exige rotas versionadas (ex.: v1); openapi não usa `/v1`. | Decidir: se versionamento for adotado, usar prefixo `/v1` em openapi e requirements; senão, marcar versionamento como futuro no checklist. |
-| **quality / container** | HealthModule e health citados em quality; não aparecem em container/components. | Incluir HealthModule em components (ex.: M10) e endpoint GET /health em openapi/context. |
+### 1.2. Pendências já resolvidas (harmonização documental)
 
-### 1.3 Status codes e convenções
-
-| Onde | Inconsistência | Correção sugerida |
-|------|----------------|-------------------|
-| **requirements** e **openapi** | Replay idempotente: "201/200" e "200 OK ou 201 Created (conforme convenção)". | Unificar: "Primeira criação → 201 Created; replay compatível → 200 OK" em requirements e openapi. |
-| **openapi / requirements** | 401/403/429/500/503 sem códigos de erro (`code`) definidos. | Sugerir taxonomia: `AUTH_TOKEN_MISSING`, `AUTH_TOKEN_INVALID`, `AUTH_INSUFFICIENT_PERMISSION`, `RATE_LIMIT_EXCEEDED`, `INTERNAL_ERROR`, `SERVICE_UNAVAILABLE`. |
-
-### 1.4 Serviços e componentes
-
-| Onde | Inconsistência | Correção sugerida |
-|------|----------------|-------------------|
-| **quality 3.4** | Cita "ReplayService"; components e requirements usam apenas IdempotencyService. | Alinhar: usar IdempotencyService; remover ou renomear ReplayService. |
-| **quality 3.4** | Cita "ProviderGatewayService"; components usa "ProvidersService ou ProviderGateway". | Unificar: `ProvidersService` como contrato principal; ProviderGateway como alias ou implementação. |
-| **components** | M9: "IdempencyStoreModule" (typo). | Corrigir para `IdempotencyStoreModule`. |
-
-### 1.5 Idempotência e roadmap
-
-| Onde | Inconsistência | Correção sugerida |
-|------|----------------|-------------------|
-| **requirements** | "Idempotency-Key dentro do limite de tamanho aceito" sem valor. | Especificar em requirements (e openapi): ex. "tamanho máximo 128 caracteres". |
-| **roadmap** | Fase A: "replay compatível (sem conflitos avançados ainda)"; openapi já descreve 409 e conflito. | Esclarecer: Fase A = replay compatível + 409 básico; Fase B = comparação canônica completa e retenção/expiração. Incluir GET by-idempotency-key em Fase A ou B. |
-
-### 1.6 Autorização e outros
-
-| Onde | Inconsistência | Correção sugerida |
-|------|----------------|-------------------|
-| **README** (fluxo 2.1) | Headers obrigatórios listam só Idempotency-Key e X-Correlation-Id. | Incluir `Authorization` nos headers obrigatórios de criação/consulta. |
-| **requirements / openapi** | "currency suportada pelo hub" sem lista. | Documentar lista mínima (ex.: BRL, USD) em requirements ou openapi. |
-| **components** | AppModule não cita ConfigModule. | Incluir ConfigModule na composição do AppModule em components. |
+- **Mapeamento payer/payee → customerId/merchantId**: Documentado em `data-state.md`, `openapi.md` e requirements; normalização na criação e nas respostas.
+- **Harmonização de estados internos vs API**: Mapeamento completo (CREATED↔INITIATED, SETTLED↔CAPTURED, etc.) em `data-state.md` e `openapi.md` §7.
+- **Inclusão do endpoint por idempotency key**: `GET /v1/payments/by-idempotency-key/{idempotencyKey}` em requirements, openapi, context, container e roadmap (Fase A).
+- **Idempotency-Key**: Tamanho máximo 128 caracteres; escopo = escopo do cliente autenticado; nota MVP/multi-tenant em quality, openapi, C4.
+- **Roadmap**: Fase A = criação, consulta por paymentId e por idempotency-key, replay + 409 básico. Fase B = idempotência avançada.
+- **Payment (data-state)**: Entidade com `completedAt`, `idempotencyKey`, `correlationId`; IdempotencyRecord com escopo (clientScope/tenantId) documentado; MVP = escopo do cliente autenticado.
+- **ConfigModule, HealthModule**: Incluídos em components e C4; GET /health em context e container.
+- **Replay 201/200**: Unificado em requirements e openapi; taxonomia de códigos de erro documentada.
+- **Moedas**: Lista mínima (BRL, USD) em requirements e openapi.
+- **README**: Seção Security Model adicionada; Authorization obrigatório e Idempotency-Key/X-Correlation-Id documentados nos headers.
 
 ---
 
@@ -91,7 +65,7 @@ Para cada etapa: o que fazer (sem código) e **quais docs sustentam**.
 
 - Entidades: Payment, Transaction, IdempotencyRecord (e opcionalmente ProviderConfig, EventLog) conforme data-state.
 - Campos de Payment: id, businessReference, amount, currency, status, customerId, merchantId, providerId, idempotencyKey, correlationId, completedAt, createdAt, updatedAt, metadata; índices e uniques conforme data-state.
-- IdempotencyRecord com tenantId e unique (tenantId, idempotencyKey, scope).
+- IdempotencyRecord com escopo do cliente (campo clientScope ou tenantId conforme implementação) e unique (escopo, idempotencyKey, scope).
 - Transações para escritas que alteram mais de uma entidade; synchronize desligado fora de teste; uso de migrations.
 
 **Docs:** `docs/data-state.md` (entidades, state machine, uniques, índices), `docs/requirements.md` (modelo payment/transaction, invariantes), `docs/quality.md` (§ 3.3 TypeORM).
@@ -100,10 +74,10 @@ Para cada etapa: o que fazer (sem código) e **quais docs sustentam**.
 
 ### Etapa 4 — Services
 
-- PaymentsService: orquestração criar/consultar; normalização do request em Payment; chamada a IdempotencyService, TransactionsService, ProvidersService e repositórios; mapeamento para DTO de resposta; checagem de acesso (tenant/recurso).
-- IdempotencyService: verificação por (tenant, Idempotency-Key); first call vs replay compatível vs conflito; registro de vínculo e hash de payload; delegação de storage a Persistence/Cache.
+- PaymentsService: orquestração criar/consultar; normalização do request em Payment; chamada a IdempotencyService, TransactionsService, ProvidersService e repositórios; mapeamento para DTO de resposta; checagem de acesso (escopo do cliente autenticado/recurso).
+- IdempotencyService: verificação por (escopo do cliente autenticado, Idempotency-Key); first call vs replay compatível vs conflito; registro de vínculo e hash de payload; delegação de storage a Persistence/Cache.
 - TransactionsService: criação/atualização de Transaction ligada a Payment; atualização de estado conforme resposta do provider.
-- ProvidersService (ou ProviderGateway): interface estável (ex.: processPayment); adaptadores para PSP/Mock; tradução de respostas para modelo interno.
+- ProvidersService: contrato principal de integração com PSPs; interface estável (ex.: processPayment); adaptadores para PSP/Mock; tradução de respostas para modelo interno.
 - Lógica de negócio e transição de estado centralizadas em serviços; controllers finos.
 
 **Docs:** `docs/requirements.md` (fluxos criar/consultar/idempotência, processamento alto nível), `docs/c4/components.md` (fluxos por componente M3–M6), `docs/data-state.md` (state machine, idempotência), `docs/quality.md` (§ 3.4 Services).
@@ -112,7 +86,7 @@ Para cada etapa: o que fazer (sem código) e **quais docs sustentam**.
 
 ### Etapa 5 — Controllers
 
-- PaymentsController: POST /payments (criação), GET /payments/:paymentId (consulta), GET /payments/by-idempotency-key/:idempotencyKey (consulta por chave).
+- PaymentsController: POST /v1/payments (criação), GET /v1/payments/:paymentId (consulta), GET /v1/payments/by-idempotency-key/:idempotencyKey (consulta por chave).
 - Controllers só: receber DTOs, delegar a serviços, mapear resultado para contrato de resposta; códigos HTTP conforme openapi (201/200/400/401/403/404/409/422/429/500/503).
 - Nenhum acesso direto a repositório/DB no controller.
 
@@ -142,7 +116,7 @@ Para cada etapa: o que fazer (sem código) e **quais docs sustentam**.
 
 ### Etapa 8 — Guards
 
-- Guard de autenticação (ex.: JWT) aplicado aos endpoints de payments; validação de token e extração de identidade/tenant/escopo.
+- Guard de autenticação (ex.: JWT) aplicado aos endpoints de payments; validação de token e extração de identidade e escopo do cliente autenticado.
 - Guard opcional de API Key (ex.: X-Api-Key) para integrações server-to-server, se adotado.
 - Uso de metadata/roles em decorators para definir permissão por rota; falhas retornadas no formato padronizado e logadas.
 
@@ -153,10 +127,10 @@ Para cada etapa: o que fazer (sem código) e **quais docs sustentam**.
 ### Etapa 9 — Auth JWT
 
 - Validação de assinatura, issuer, audience, exp, iat em um único componente de autenticação.
-- Extração de sub, roles/permissions e tenant (ou clientId) para contexto acessível na aplicação.
+- Extração de sub, roles/permissions e escopo do cliente (ex.: clientId) para contexto acessível na aplicação.
 - JWT não como fonte de dados sensíveis; suporte a rotação de chaves/segredos (janela de migração).
 
-**Docs:** `docs/requirements.md` (autenticação OAuth2/JWT, escopo/tenant), `docs/quality.md` (§ 2.2 Escopo JWT, § 3.9 Auth JWT), `docs/c4/context.md` (Provider de Identidade/Auth).
+**Docs:** `docs/requirements.md` (autenticação OAuth2/JWT, escopo do cliente), `docs/quality.md` (§ 2.2 Escopo JWT, § 3.9 Auth JWT), `docs/c4/context.md` (Provider de Identidade/Auth).
 
 ---
 
@@ -178,7 +152,7 @@ O plano de implementação segue a ordem de fixação NestJS definida em [docs/r
 
 4. **Services** — PaymentsService, IdempotencyService, TransactionsService, ProvidersService; orquestração e regras de negócio. *Ref.: requirements.md, components.md, data-state.md, quality.md.*
 
-5. **Controllers** — PaymentsController: POST /payments, GET /payments/:paymentId, GET /payments/by-idempotency-key/:idempotencyKey; códigos HTTP conforme OpenAPI. *Ref.: openapi.md, requirements.md, context.md, container.md, quality.md.*
+5. **Controllers** — PaymentsController: POST /v1/payments, GET /v1/payments/:paymentId, GET /v1/payments/by-idempotency-key/:idempotencyKey; códigos HTTP conforme OpenAPI. *Ref.: openapi.md, requirements.md, context.md, container.md, quality.md.*
 
 6. **Exception Filters** — Filtro global; formato { code, message, details?, correlationId }; mapeamento de exceções para status e códigos. *Ref.: requirements.md, openapi.md, quality.md.*
 
@@ -186,7 +160,7 @@ O plano de implementação segue a ordem de fixação NestJS definida em [docs/r
 
 8. **Guards** — Proteção de rotas (JWT; opcional API Key); roles/metadata por rota. *Ref.: requirements.md, quality.md, components.md.*
 
-9. **Auth JWT** — Validação de token (iss, aud, exp, iat); contexto de identidade e tenant; rotação de chaves. *Ref.: requirements.md, quality.md, context.md.*
+9. **Auth JWT** — Validação de token (iss, aud, exp, iat); contexto de identidade e escopo do cliente autenticado; rotação de chaves. *Ref.: requirements.md, quality.md, context.md.*
 
 Cada etapa deve ser implementada e testada antes de avançar; os documentos em `docs/` são a fonte de verdade para contratos, estados e convenções.
 
@@ -217,9 +191,9 @@ feat(services): add ProvidersService (gateway) and MockPspClient adapter
 
 feat(services): add PaymentsService orchestrating create and get flows
 
-feat(controllers): add PaymentsController with POST /payments and GET /payments/:paymentId
+feat(controllers): add PaymentsController with POST /v1/payments and GET /v1/payments/:paymentId
 
-feat(controllers): add GET /payments/by-idempotency-key/:idempotencyKey
+feat(controllers): add GET /v1/payments/by-idempotency-key/:idempotencyKey
 
 feat(filters): add global HttpExceptionFilter with standardized error body and correlationId
 
@@ -233,9 +207,11 @@ feat(guards): add JwtAuthGuard and apply to payment routes
 
 feat(auth): add JWT strategy and validation (iss, aud, exp, iat)
 
-feat(auth): extract identity and tenant from token into request context
+feat(auth): extract identity and client scope from token into request context
 
 docs: add INTEGRATION-REVIEW with consistency notes and implementation plan
+
+docs(review): declare docs as source of truth for AI agents and mark §1.1 ready for guided implementation
 ```
 
 ---

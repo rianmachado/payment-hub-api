@@ -24,7 +24,7 @@
 
 - **Payment Hub API (Software System) — sistema em foco**
   - Aplicação NestJS que expõe endpoints REST.
-  - Expõe, entre outros: `POST /payments`, `GET /payments/{paymentId}`, `GET /payments/by-idempotency-key/{idempotencyKey}`, e endpoint de saúde `GET /health` (conforme quality/OpenAPI).
+  - Expõe, entre outros: `POST /v1/payments`, `GET /v1/payments/{paymentId}`, `GET /v1/payments/by-idempotency-key/{idempotencyKey}`, e endpoint de saúde `GET /v1/health` ou `GET /health` (conforme OpenAPI).
   - Responsabilidades:
     - Receber, validar e autenticar requisições de criação/consulta de pagamento.
     - Aplicar regras de negócio mínimas e idempotência.
@@ -51,7 +51,7 @@
 - **Cache/Idempotency Store (Redis ou Similar) (Optional External System)**
   - Armazenamento chave-valor de baixa latência para suporte à idempotência e rate limiting.
   - Responsabilidades:
-    - Manter mapeamentos rápidos de `(tenant, Idempotency-Key) -> paymentId / hash de payload`.
+    - Manter mapeamentos rápidos de (**escopo do cliente autenticado** + `Idempotency-Key`) → `paymentId` / hash de payload. *O MVP não assume multi-tenant explícito; o escopo de idempotência é o cliente autenticado. Em evolução futura esse escopo poderá ser materializado como `tenantId`.*
     - Ajudar a prevenir race conditions em cenários de alta concorrência.
 
 - **Infra de Observabilidade / Logging (External System)**
@@ -68,15 +68,15 @@
 ### 4. Relações de alto nível (Contexto)
 
 - **Cliente da API → Payment Hub API**
-  - `HTTP POST /payments` (criação de pagamento) com:
+  - `HTTP POST /v1/payments` (criação de pagamento) com:
     - `Authorization` (obrigatório).
     - `Idempotency-Key` (obrigatório na criação).
     - `X-Correlation-Id` (opcional; gerado pelo hub se ausente).
-    - Body com `payer`, `payee`, `amount`, `currency`, `paymentMethod`, `externalReference`, etc.
-  - `HTTP GET /payments/{paymentId}` (consulta de pagamento) com:
+    - Body com `payer`, `payee` (vocabulário da API; internamente normalizados para `customerId`/`merchantId`), `amount`, `currency`, `paymentMethod`, `externalReference`, etc.
+  - `HTTP GET /v1/payments/{paymentId}` (consulta de pagamento) com:
     - `Authorization`.
     - `X-Correlation-Id` (opcional).
-  - `HTTP GET /payments/by-idempotency-key/{idempotencyKey}` (consulta por chave de idempotência) com:
+  - `HTTP GET /v1/payments/by-idempotency-key/{idempotencyKey}` (consulta por chave de idempotência) com:
     - `Authorization`.
     - `X-Correlation-Id` (opcional).
   - Recebe como resposta:
@@ -84,7 +84,7 @@
 
 - **Payment Hub API ↔ Provider de Identidade / Auth**
   - Valida tokens presentes em `Authorization`.
-  - Usa claims/escopos para autorização e multi-tenant.
+  - Usa claims/escopos para autorização (escopo do cliente autenticado; evolução: multi-tenant).
 
 - **Payment Hub API ↔ Banco de Dados de Pagamentos**
   - Escritas:
@@ -97,7 +97,7 @@
 
 - **Payment Hub API ↔ Cache/Idempotency Store**
   - Escritas:
-    - Registro rápido de `(tenant, Idempotency-Key) -> paymentId / hash de payload`.
+    - Registro rápido de (escopo do cliente autenticado, `Idempotency-Key`) → `paymentId` / hash de payload.
   - Leituras:
     - Verificação rápida se a chave idempotente já foi usada.
     - Comparação de payload para detecção de conflito (`PAYMENT_IDEMPOTENCY_CONFLICT`).
@@ -109,7 +109,7 @@
 
 - **Payment Hub API → Infra de Observabilidade / Logging**
   - Emissão de logs estruturados e métricas mínimas:
-    - `correlationId`, `paymentId`, `tenantId`, `status`, `errorCode`, latência, etc.
+    - `correlationId`, `paymentId`, escopo do cliente, `status`, `errorCode`, latência, etc.
 
 ### 5. Boundaries de contexto
 
@@ -155,3 +155,9 @@
   - `Payment Hub API -> Cache/Idempotency Store`: leitura/escrita de chaves idempotentes.
   - `Payment Hub API -> PSP / Provider`: orquestração de tentativas de pagamento.
   - `Payment Hub API -> Infra de Observabilidade / Logging`: envio de logs/métricas com `correlationId`.
+
+### 7. Diagrama C4 — Contexto (draw.io)
+
+O diagrama está em formato draw.io (XML) em `docs/c4/diagrams/context.drawio`, com **sequências numeradas** em cada ligação. Pode ser editado em [app.diagrams.net](https://app.diagrams.net) ou no Draw.io desktop. A imagem PNG é gerada a partir do `.drawio` (ver README na pasta `diagrams/`).
+
+![Diagrama C4 — Contexto](diagrams/context.png)

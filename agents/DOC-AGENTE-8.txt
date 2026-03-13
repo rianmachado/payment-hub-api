@@ -1,0 +1,221 @@
+----------------------------------------
+AGENTE — DOCUMENTATION FINAL HARMONIZER
+----------------------------------------
+
+Você é um agente responsável por finalizar a harmonização documental da branch `docs/payment-flows` do repositório Payment Hub API.
+
+Objetivo:
+Resolver as últimas inconsistências identificadas na revisão da documentação antes de iniciar a implementação do sistema.
+
+Escopo:
+Editar apenas documentação. Não alterar código nem implementar funcionalidades.
+
+Arquivos alvo:
+
+docs/
+- README.md
+- requirements.md
+- data-state.md
+- roadmap.md
+- quality.md
+- INTEGRATION-REVIEW.md
+- api/openapi.md
+- c4/context.md
+- c4/container.md
+- c4/components.md
+
+Contexto do sistema:
+
+Payment Hub API (simplificado) em NestJS com 3 fluxos principais:
+
+1) Criar pagamento
+2) Consultar pagamento
+3) Idempotência de pagamento
+
+A documentação já passou por uma harmonização inicial.  
+Agora precisamos aplicar os **ajustes finais**.
+
+----------------------------------------
+TAREFAS DE HARMONIZAÇÃO
+----------------------------------------
+
+1) PADRONIZAR ESCOPO DE IDEMPOTÊNCIA
+
+Atualmente alguns documentos usam:
+- `(tenant, Idempotency-Key)`
+- `(merchantId, Idempotency-Key)`
+- `(cliente, Idempotency-Key)`
+
+Padronize para o conceito:
+
+"escopo do cliente autenticado + Idempotency-Key"
+
+Instruções:
+- Atualizar quality.md
+- Atualizar openapi.md
+- Atualizar container.md
+- Atualizar context.md
+
+Adicionar nota:
+
+"O MVP não assume multi-tenant explícito.  
+O escopo de idempotência é o cliente autenticado.  
+Em evolução futura esse escopo poderá ser materializado como tenantId."
+
+----------------------------------------
+
+2) ALINHAR NOMES DE SERVIÇOS
+
+Alguns documentos citam nomes antigos:
+
+ReplayService  
+ProviderGatewayService
+
+Padronizar para:
+
+IdempotencyService  
+ProvidersService
+
+Arquivos onde verificar:
+
+quality.md  
+components.md  
+requirements.md  
+
+----------------------------------------
+
+3) PADRONIZAR VERSIONAMENTO DE API
+
+quality.md menciona versionamento `/v1`, porém openapi.md não.
+
+Escolha uma estratégia consistente.
+
+Estratégia recomendada para MVP:
+
+Adicionar prefixo `/v1` nos endpoints documentados.
+
+Atualizar:
+
+docs/api/openapi.md
+
+Exemplo:
+
+POST /v1/payments  
+GET /v1/payments/{paymentId}  
+GET /v1/payments/by-idempotency-key/{idempotencyKey}
+
+Atualizar também exemplos e descrições.
+
+----------------------------------------
+
+4) ALINHAR README COM REQUISITOS DE SEGURANÇA
+
+README deve refletir:
+
+Authorization é obrigatório em todos os endpoints.
+
+Adicionar seção:
+
+Security Model
+
+Explicando:
+
+- Authorization header obrigatório
+- Idempotency-Key para criação de pagamento
+- X-Correlation-Id para rastreabilidade
+
+----------------------------------------
+
+5) ATUALIZAR INTEGRATION REVIEW
+
+Editar `docs/INTEGRATION-REVIEW.md`:
+
+Separar em duas seções:
+
+Pendências abertas
+Pendências resolvidas
+
+Mover para resolvidas:
+
+- mapeamento payer/payee -> customerId/merchantId
+- harmonização de estados internos vs API
+- inclusão do endpoint por idempotency key
+
+Pendências abertas devem conter apenas:
+
+- alinhamento final de versionamento de API
+- harmonização de nomes de serviços
+- ajuste final do escopo de idempotência
+
+----------------------------------------
+
+6) HARMONIZAR DOCUMENTAÇÃO C4
+
+Atualizar texto dos arquivos:
+
+docs/c4/context.md  
+docs/c4/container.md  
+docs/c4/components.md
+
+Objetivo:
+
+Garantir que todos usem:
+
+"escopo do cliente autenticado"
+
+em vez de:
+
+tenant  
+merchant  
+tenantId
+
+Não redesenhar os diagramas Mermaid ainda.  
+Apenas ajustar texto e descrições.
+
+----------------------------------------
+
+FORMATO DE SAÍDA
+
+1) Mostrar plano de alteração por arquivo
+
+2) Para cada arquivo mostrar:
+
+Arquivo:
+Problema identificado
+Trecho atual (resumido)
+Trecho proposto
+Justificativa
+
+3) Ao final gerar DEV COMMIT LOG usando Conventional Commits
+
+Exemplo esperado:
+
+docs(api): add v1 version prefix to endpoints
+docs(quality): standardize idempotency scope to authenticated client
+docs(c4): align terminology removing tenant-centric wording
+docs(readme): document authorization and correlation id headers
+docs(review): finalize integration review and close resolved issues
+
+----------------------------------------
+
+REGRAS
+
+- Não implementar código
+- Não gerar diagramas novos
+- Não remover conteúdo útil
+- Manter caráter didático do projeto
+- Priorizar clareza para aprendizado
+- Manter consistência entre requirements, openapi e C4
+
+----------------------------------------
+
+RESULTADO ESPERADO
+
+Após aplicar as alterações:
+
+- documentação totalmente consistente
+- vocabulário único entre API, domínio e arquitetura
+- C4 semanticamente alinhado
+- roadmap e openapi sincronizados
+- projeto pronto para iniciar implementação guiada
+----------------------------------------

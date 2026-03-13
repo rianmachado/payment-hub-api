@@ -48,11 +48,11 @@ Centralizar e padronizar a orquestração de pagamentos de diferentes provedores
   - **Provider/PSP**: provedor externo (real ou simulado) que processa o pagamento.
 
 - **Entrada (requisição HTTP)**
-  - Método: **POST** `/payments` (rota ilustrativa).
+  - Método: **POST** `/v1/payments` (rota versionada; ver [OpenAPI](docs/api/openapi.md)).
   - Headers obrigatórios:
-    - `Authorization`: token de autenticação (ex.: Bearer JWT).
-    - `Idempotency-Key`: chave única por intenção de pagamento.
-    - `X-Correlation-Id`: identificador de correlação do fluxo de negócio.
+    - `Authorization`: token de autenticação (ex.: Bearer JWT) — **obrigatório em todos os endpoints**.
+    - `Idempotency-Key`: chave única por escopo do cliente autenticado e intenção de pagamento.
+    - `X-Correlation-Id`: identificador de correlação do fluxo (recomendado; se ausente, a API pode gerar).
   - Corpo contendo, em alto nível:
     - `amount` (valor).
     - `currency`.
@@ -96,10 +96,10 @@ Centralizar e padronizar a orquestração de pagamentos de diferentes provedores
   - **Payment Hub API**: camadas de controller, service e repositório.
 
 - **Entrada (requisição HTTP)**
-  - Método: **GET** `/payments/{paymentId}` ou `/payments/by-idempotency-key/{idempotencyKey}` (ver OpenAPI).
-  - Headers recomendados:
-    - `Authorization`: token de autenticação.
-    - `X-Correlation-Id`: identificador/propagado para rastreio do request.
+  - Método: **GET** `/v1/payments/{paymentId}` ou **GET** `/v1/payments/by-idempotency-key/{idempotencyKey}` (ver [OpenAPI](docs/api/openapi.md)).
+  - Headers obrigatórios/recomendados:
+    - `Authorization`: token de autenticação — **obrigatório**.
+    - `X-Correlation-Id`: identificador para rastreio (recomendado).
 
 - **Etapas do fluxo (conceituais)**
   - **1. Recepção e validação de rota/parâmetros**
@@ -171,19 +171,31 @@ Centralizar e padronizar a orquestração de pagamentos de diferentes provedores
 
 ### 4.1. Headers
 
+- **`Authorization`**
+  - **Obrigatório em todos os endpoints** de criação e consulta de pagamento.
+  - Token de autenticação (ex.: Bearer JWT). Sem token válido a API retorna 401.
+
 - **`Idempotency-Key`**
-  - Obrigatório em operações de criação de pagamento.
+  - Obrigatório em operações de criação de pagamento (`POST /v1/payments`).
   - Deve ser:
-    - Único por intenção de pagamento dentro de uma janela de tempo definida (a decidir).
+    - Único por **escopo do cliente autenticado** dentro de uma janela de tempo definida.
     - Mantido pelo cliente da API (geração e reuso em novas tentativas).
   - Usado para vincular requisições repetidas ao mesmo `payment`.
 
 - **`X-Correlation-Id`**
-  - Pode ser enviado pelo cliente da API; caso ausente, a API pode gerar um novo valor.
+  - Recomendado para rastreabilidade ponta a ponta; caso ausente, a API pode gerar um novo valor.
   - Deve ser:
     - Registrado em logs.
     - Devolvido em erros e respostas bem-sucedidas, para rastreamento.
   - Propagado para chamadas a provedores/PSPs sempre que possível.
+
+---
+
+### Security Model (resumo)
+
+- **Authorization**: header obrigatório em todos os endpoints de pagamento; validação de token (ex.: JWT) antes do processamento.
+- **Idempotency-Key**: obrigatório na criação de pagamento; garante que retentativas com a mesma chave (no mesmo escopo do cliente autenticado) retornem o mesmo resultado sem duplicar cobranças.
+- **X-Correlation-Id**: usado para rastreabilidade; enviado pelo cliente ou gerado pela API, propagado em logs e respostas.
 
 ### 4.2. Padrão de erro
 
@@ -269,7 +281,7 @@ O plano de implementação segue a ordem de fixação NestJS definida em [docs/r
 
 4. **Services** — PaymentsService, IdempotencyService, TransactionsService, ProvidersService; orquestração e regras de negócio. *Ref.: requirements.md, components.md, data-state.md, quality.md.*
 
-5. **Controllers** — PaymentsController: POST /payments, GET /payments/:paymentId, GET /payments/by-idempotency-key/:idempotencyKey; códigos HTTP conforme OpenAPI. *Ref.: openapi.md, requirements.md, context.md, container.md, quality.md.*
+5. **Controllers** — PaymentsController: POST /v1/payments, GET /v1/payments/:paymentId, GET /v1/payments/by-idempotency-key/:idempotencyKey; códigos HTTP conforme OpenAPI. *Ref.: openapi.md, requirements.md, context.md, container.md, quality.md.*
 
 6. **Exception Filters** — Filtro global; formato { code, message, details?, correlationId }; mapeamento de exceções para status e códigos. *Ref.: requirements.md, openapi.md, quality.md.*
 
@@ -277,6 +289,6 @@ O plano de implementação segue a ordem de fixação NestJS definida em [docs/r
 
 8. **Guards** — Proteção de rotas (JWT; opcional API Key); roles/metadata por rota. *Ref.: requirements.md, quality.md, components.md.*
 
-9. **Auth JWT** — Validação de token (iss, aud, exp, iat); contexto de identidade e tenant; rotação de chaves. *Ref.: requirements.md, quality.md, context.md.*
+9. **Auth JWT** — Validação de token (iss, aud, exp, iat); contexto de identidade e escopo do cliente autenticado; rotação de chaves. *Ref.: requirements.md, quality.md, context.md.*
 
 Cada etapa deve ser implementada e testada antes de avançar; os documentos em `docs/` são a fonte de verdade para contratos, estados e convenções.

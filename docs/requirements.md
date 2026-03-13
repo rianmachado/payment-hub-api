@@ -28,7 +28,7 @@ Centralizar e padronizar a orquestração de pagamentos através de uma API REST
 ### Fluxos principais
 
 - **Criar pagamento**: validação → verificação de idempotência → criação de `payment` e `transaction` → chamada ao PSP → atualização de estado → resposta 201/200.
-- **Consultar pagamento**: busca por `paymentId`, por `externalReference`+cliente ou por chave de idempotência (`GET /payments/by-idempotency-key/{idempotencyKey}`); retorno 200 ou erro 404 padronizado. Ver [OpenAPI](api/openapi.md) para o endpoint de consulta por Idempotency-Key.
+- **Consultar pagamento**: busca por `paymentId`, por `externalReference` no escopo do cliente ou por chave de idempotência (`GET /v1/payments/by-idempotency-key/{idempotencyKey}`); retorno 200 ou erro 404 padronizado. Ver [OpenAPI](api/openapi.md) para os endpoints versionados.
 - **Idempotência de pagamento**: uso de `Idempotency-Key` + `businessKey` → reutilização do resultado da primeira chamada → ausência de chamadas redundantes ao PSP.
 
 ### Glossário
@@ -98,7 +98,7 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
     - `Authorization` válido e com escopo para criar pagamentos.  
   - **Idempotência**
     - `Idempotency-Key` presente, não vazio, com tamanho máximo de 128 caracteres.
-    - Para mesma `Idempotency-Key` + `cliente`, retornos consistentes conforme regras do fluxo de idempotência.  
+    - Escopo da chave: **cliente autenticado** (identidade/escopo extraído do token). Para mesma `Idempotency-Key` no mesmo escopo, retornos consistentes conforme regras do fluxo de idempotência. (Evolução futura: multi-tenant com `tenantId` explícito.)  
   - **Body**  
     - Campos obrigatórios presentes (`payer`, `payee`, `amount`, `currency`, `paymentMethod.type`).  
     - `amount > 0`.  
@@ -111,8 +111,8 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
 
 - **Processamento (alto nível)**  
   - **1. Criação de intenção de pagamento**  
-    - Normaliza request → monta entidade interna `Payment`.  
-    - Gera `paymentId` interno único e estado inicial `CREATED` ou `PENDING`.  
+    - Normaliza request (objetos `payer`/`payee` da API → `customerId`/`merchantId` no modelo interno) e monta entidade interna `Payment`.  
+    - Gera `paymentId` interno único. Estado inicial persistido: `INITIATED` (ainda não enviado ao provedor) ou `PENDING` (já enviado); na resposta da API expõe-se o equivalente: `CREATED` ou `PENDING` (ver [data-state.md](data-state.md) para mapeamento completo interno ↔ API).  
     - Persiste registro com: dados do pagamento, `Idempotency-Key`, `businessKey`, timestamps e `correlationId`.  
   - **2. Aplicação de regras de negócio síncronas mínimas**  
     - Checa limites, bloqueios simples (ex.: cliente bloqueado, merchant desabilitado).  
@@ -120,7 +120,7 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
   - **3. Disparo de orquestração (se aplicável ao MVP)**  
     - Opcionalmente publica evento ou agenda job para integração com provedor externo.  
   - **4. Resposta ao chamador**  
-    - Sempre retorna representação do recurso `Payment` (estado atual, não necessariamente final).  
+    - Sempre retorna representação do recurso `Payment` (estado atual na linguagem da API: `CREATED`, `PENDING`, `FAILED`, etc., não necessariamente final).  
 
 - **Saídas (response)**  
   - **Body (JSON)** – sucesso (201)  
@@ -178,21 +178,21 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
 
 - **Validações essenciais**  
   - Autenticação e autorização do cliente.  
-  - Verificar se o cliente tem acesso ao `paymentId` solicitado (multi-tenant / escopo).  
+  - Verificar se o cliente autenticado tem acesso ao `paymentId` solicitado (escopo do token; em evolução: multi-tenant).  
   - Validação de formato do `paymentId`.  
 
 - **Processamento (alto nível)**  
-  - Localiza o pagamento pelo identificador (índice por `paymentId` e/ou `externalReference+tenant`).  
-  - Aplica filtros de autorização (o chamador pode ver este pagamento?).  
-  - Monta DTO de resposta com: dados do pagamento + status atual + últimos timestamps relevantes.  
+  - Localiza o pagamento pelo identificador (índice por `paymentId`, por `externalReference` no escopo do cliente, ou por chave de idempotência — ver endpoint `GET /v1/payments/by-idempotency-key/{idempotencyKey}`).  
+  - Aplica filtros de autorização (o cliente autenticado pode ver este pagamento?).  
+  - Monta DTO de resposta na linguagem da API (`payer`, `payee`, `status` exposto) a partir do modelo interno; inclui status atual e últimos timestamps relevantes.  
   - Opcionalmente agrega dados de eventos de status (se `expand` solicitado e suportado).  
 
 - **Saídas (response)**  
   - **Body (JSON)** – sucesso (200)  
     - `paymentId`  
-    - `status` (ex.: `CREATED`, `PENDING`, `AUTHORIZED`, `SETTLED`, `FAILED`, `CANCELLED`)  
+    - `status` (vocabulário da API: `CREATED`, `PENDING`, `AUTHORIZED`, `SETTLED`, `FAILED`, `CANCELLED` — mapeado do estado interno; ver data-state.md)  
     - `amount`, `currency`  
-    - `payer`, `payee`  
+    - `payer`, `payee` (objetos do contrato da API; montados a partir de `customerId`/`merchantId` internos)  
     - `paymentMethod` (mascarado)  
     - `externalReference`  
     - `createdAt`, `updatedAt`, `completedAt` (quando existir)  
@@ -228,14 +228,14 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
   - Parâmetros usados para compor a **business key** (ver invariantes).  
 
 - **Validações essenciais**  
-  - `Idempotency-Key` não pode ser vazio e deve atender formato/tamanho máximo.  
-  - Combinação `(tenant/cliente, Idempotency-Key)` deve ser única durante a janela de retenção configurada.  
+  - `Idempotency-Key` não pode ser vazio e deve atender formato/tamanho máximo (ex.: 128 caracteres).  
+  - Escopo: **cliente autenticado** (identidade/escopo do token). A combinação (escopo do cliente, `Idempotency-Key`) deve ser única durante a janela de retenção configurada. (Multi-tenant: evolução futura com `tenantId` explícito.)  
   - Na repetição de requisição com mesma `Idempotency-Key`, comparar payload relevante com registro anterior (para detectar conflito).  
 
 - **Processamento (alto nível)**  
   - **1. Recepção da requisição de criação**  
     - Gera/recebe `correlationId`.  
-    - Busca se já existe registro para `(tenant, Idempotency-Key)`.  
+    - Busca se já existe registro para (escopo do cliente autenticado, `Idempotency-Key`).  
   - **2. Comportamento em caso de "first call"**  
     - Não existe registro → cria pagamento normalmente, liga `Idempotency-Key` ao `paymentId` e persiste.  
     - Armazena também o "hash" ou subconjunto canônico do payload de negócio para comparação futura.  
@@ -275,7 +275,7 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
 ## Requisitos não funcionais
 
 - **Observabilidade**  
-  - Logs estruturados com: `correlationId`, `paymentId`, `tenantId`, `status`, `errorCode` (quando houver).  
+  - Logs estruturados com: `correlationId`, `paymentId`, escopo do cliente, `status`, `errorCode` (quando houver).  
   - Métricas mínimas:  
     - Contador de pagamentos criados por status final.  
     - Latência de criação e consulta.  
@@ -290,7 +290,7 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
 - **Segurança**  
   - Comunicação somente sobre TLS (HTTPS).  
   - Autenticação obrigatória via esquema padronizado (ex.: OAuth2/JWT), de acordo com o Context Pack.  
-  - Autorização por escopo/role e por tenant.  
+  - Autorização por escopo/role (escopo do cliente autenticado; evolução: multi-tenant).  
   - Dados sensíveis (ex.: dados de cartão) nunca são retornados em claro, apenas tokens/aliases.  
   - Logs não podem registrar dados confidenciais (apenas identificadores ou versões mascaradas).  
 
@@ -303,20 +303,18 @@ Modules → DTO/Validation/Pipes/Middlewares → TypeORM → Services → Contro
   - Para o **modelo conceitual completo** de entidades, state machines e idempotência (Payment, Transaction, IdempotencyRecord, ProviderConfig, EventLog; transições de estado; replay e conflitos), ver **[Modelo de Dados & Estado](data-state.md)**.
   - **Idempotency-Key**  
     - Obrigatória para criação de pagamento.  
-    - Escopo: única por `(tenant/cliente, Idempotency-Key)` em janela configurável (ex.: N dias).  
-    - Associada 1:1 a um `paymentId`.  
+    - Escopo: única por (cliente autenticado / escopo do token, `Idempotency-Key`) em janela configurável (ex.: N dias). Associada 1:1 a um `paymentId`. Evolução: multi-tenant com `tenantId`.  
   - **Business key de pagamento (conceito)**  
-    - Combinação lógica que identifica uma "intenção" de pagamento, por exemplo:  
-      - `tenantId`, `payer`, `payee`, `amount`, `currency`, `externalReference` (ajustar conforme contexto real).  
+    - Combinação lógica que identifica uma "intenção" de pagamento, por exemplo: escopo do cliente, `payer`/`payee` (ou `customerId`/`merchantId` internos), `amount`, `currency`, `externalReference`.  
     - Usada para detecção adicional de duplicidade de negócio (além da `Idempotency-Key`).  
-  - **Transição de estado do pagamento (exemplo mínimo)**  
-    - Estados possíveis:  
-      - `CREATED` → intenção registrada, ainda não enviada.  
-      - `PENDING` → em processamento junto ao provedor.  
-      - `AUTHORIZED` → valor autorizado, ainda não liquidado.  
-      - `SETTLED` → pagamento concluído com sucesso.  
-      - `FAILED` → falha irrecuperável.  
-      - `CANCELLED` → cancelado após criação.  
+  - **Transição de estado do pagamento (vocabulário da API)**  
+    - Estados expostos na API:  
+      - `CREATED` — intenção registrada, ainda não enviada ao provedor (equivalente interno: `INITIATED`).  
+      - `PENDING` — em processamento junto ao provedor.  
+      - `AUTHORIZED` — valor autorizado, ainda não liquidado.  
+      - `SETTLED` — pagamento concluído com sucesso (equivalente interno: `CAPTURED`).  
+      - `FAILED` — falha irrecuperável.  
+      - `CANCELLED` — cancelado após criação.  
     - Invariantes de transição:  
       - Não é permitido voltar de um estado final (`SETTLED`, `FAILED`, `CANCELLED`) para estados anteriores.  
       - Alterações de `amount` e `currency` não são permitidas após `AUTHORIZED` (ou outro marco definido).  

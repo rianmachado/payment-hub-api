@@ -26,16 +26,16 @@
 - **C3. Banco de Dados de Pagamentos (Relational Database)**
   - Banco relacional (Postgres, SQLite, etc.).
   - Responsável por persistir:
-    - Entidades `Payment` (incluindo `status`, `amount`, `payer`, `payee`, `idempotencyKey`, `externalReference`, `tenantId`, timestamps).
+    - Entidades `Payment` (incluindo `status`, `amount`, `customerId`, `merchantId` — expostos na API como `payer`/`payee` —, `idempotencyKey`, `externalReference`, escopo do cliente, timestamps).
     - Entidades `Transaction` (status, PSP, referências, timestamps).
   - Fornece:
     - Consistência forte das escritas.
-    - Consultas eficientes por `paymentId`, `externalReference`, `tenant`, etc.
+    - Consultas eficientes por `paymentId`, `externalReference`, escopo do cliente, etc.
 
 - **C4. Cache / Idempotency Store (Redis ou similar)**
   - Armazenamento chave-valor de baixa latência.
   - Responsável por:
-    - Manter índice de idempotência: `(tenant, Idempotency-Key) -> paymentId / hash de payload`.
+    - Manter índice de idempotência: **escopo do cliente autenticado** + `Idempotency-Key` → `paymentId` / hash de payload. *O MVP não assume multi-tenant explícito; em evolução futura o escopo poderá ser materializado como `tenantId`.*
     - Apoiar detecção de replays e conflitos.
     - Possível base para rate limiting.
 
@@ -61,10 +61,10 @@
 
 - **C1 → C2: Cliente da API → Payment Hub API**
   - HTTP/HTTPS:
-    - `POST /payments`
-    - `GET /payments/{paymentId}` (ou variante por `externalReference`)
-    - `GET /payments/by-idempotency-key/{idempotencyKey}`
-    - `GET /health` (healthcheck)
+    - `POST /v1/payments`
+    - `GET /v1/payments/{paymentId}` (ou variante por `externalReference`)
+    - `GET /v1/payments/by-idempotency-key/{idempotencyKey}`
+    - `GET /v1/health` ou `GET /health` (healthcheck)
   - Headers:
     - `Authorization` (obrigatório).
     - `Idempotency-Key` (obrigatório na criação).
@@ -77,11 +77,11 @@
     - Persistência de vínculos de idempotência (se persistidos em DB).
   - Leituras:
     - Consulta de pagamentos para leitura (fluxo de consulta).
-    - Uso de filtros por tenant, externalReference, etc.
+    - Uso de filtros por escopo do cliente, externalReference, etc.
 
 - **C2 ↔ C4: Payment Hub API ↔ Cache / Idempotency Store**
   - Escritas:
-    - Registro imediato de `(tenant, Idempotency-Key) -> paymentId / hash de payload`.
+    - Registro imediato de (escopo do cliente autenticado, `Idempotency-Key`) → `paymentId` / hash de payload.
     - Criação de locks simples (chaves com TTL) para evitar corrida.
   - Leituras:
     - Verificação rápida de existência da chave idempotente.
@@ -100,7 +100,7 @@
 
 - **C2 → C7: Payment Hub API → Stack de Observabilidade / Logging**
   - Envio de:
-    - Logs estruturados (incluindo `correlationId`, `paymentId`, `tenantId`).
+    - Logs estruturados (incluindo `correlationId`, `paymentId`, escopo do cliente).
     - Métricas de contadores/latências/erros.
 
 ### 3. Boundaries e responsabilidades por contêiner
@@ -162,9 +162,15 @@
   - `C7: Stack de Observabilidade / Logging` (External Service).
 
 - **Relações**
-  - `C1 -> C2`: HTTP/HTTPS com `Authorization`, `Idempotency-Key`, `X-Correlation-Id`.
+  - `C1 -> C2`: HTTP/HTTPS (rotas `/v1/...`) com `Authorization`, `Idempotency-Key`, `X-Correlation-Id`.
   - `C2 -> C3`: leitura/escrita de `Payment` e `Transaction`.
   - `C2 -> C4`: leitura/escrita de chaves de idempotência e locks.
   - `C2 -> C5`: chamadas de processamento de pagamento.
   - `C2 -> C6`: validação de tokens.
   - `C2 -> C7`: envio de logs e métricas.
+
+### 5. Diagrama C4 — Contêineres (draw.io)
+
+O diagrama está em formato draw.io (XML) em `docs/c4/diagrams/container.drawio`, com **sequências numeradas** em cada ligação. Edição em [app.diagrams.net](https://app.diagrams.net). PNG gerado a partir do `.drawio` (ver README em `diagrams/`).
+
+![Diagrama C4 — Contêineres](diagrams/container.png)

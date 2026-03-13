@@ -27,9 +27,9 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
   - Módulo de **orquestração de pagamentos**.
   - Componentes:
     - `PaymentsController` — endpoints HTTP:
-      - `POST /payments` (criar).
-      - `GET /payments/{paymentId}` (consultar).
-      - `GET /payments/by-idempotency-key/{idempotencyKey}` (consultar por chave de idempotência).
+      - `POST /v1/payments` (criar).
+      - `GET /v1/payments/{paymentId}` (consultar).
+      - `GET /v1/payments/by-idempotency-key/{idempotencyKey}` (consultar por chave de idempotência).
     - `PaymentsService` — orquestra lógica de alto nível de criação/consulta.
     - DTOs, pipes de validação, mapeadores.
   - Responsabilidades:
@@ -54,7 +54,7 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
     - `IdempotencyService`.
     - Abstrações de storage (DB/Redis) para chaves de idempotência.
   - Responsabilidades:
-    - Receber `Idempotency-Key` + contexto de tenant/cliente.
+    - Receber `Idempotency-Key` + contexto do cliente autenticado (escopo do token).
     - Verificar se existe `Payment` previamente associado àquela chave.
     - Detectar replays compatíveis vs. conflitos de payload.
     - Registrar novos vínculos `Idempotency-Key -> paymentId / hash de payload`.
@@ -63,7 +63,7 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
 - **M6. ProvidersModule**
   - Módulo de abstração de **PSPs**.
   - Componentes:
-    - `ProvidersService` (contrato principal; ProviderGateway como alias ou implementação).
+    - `ProvidersService` (contrato principal de integração com PSPs).
     - Adapters específicos de PSP (ex.: `MockPspClient` neste baseline).
   - Responsabilidades:
     - Expor método interno estável (ex.: `processPayment(request)`) para o domínio.
@@ -139,7 +139,7 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
 - **IdempotencyModule**
   - Boundary de **idempotência**.
   - Responsável por:
-    - Regra de 1:1 entre `Idempotency-Key` e `paymentId` por tenant.
+    - Regra de 1:1 entre `Idempotency-Key` e `paymentId` no escopo do cliente autenticado.
     - Detecção de replay compatível vs. conflito.
   - Não expõe endpoints HTTP; é usado por `PaymentsModule`.
 
@@ -186,10 +186,10 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
 5. **PaymentsModule — `PaymentsService`**
    - Normaliza request em um objeto de domínio/proposta de `Payment`.
    - Invoca `IdempotencyService` (em `IdempotencyModule`), passando:
-     - `tenant/cliente`, `Idempotency-Key`, subset canônico do payload.
+     - escopo do cliente autenticado, `Idempotency-Key`, subset canônico do payload.
 
 6. **IdempotencyModule — `IdempotencyService`**
-   - Consulta `CacheModule` (Redis) para ver se há registro para `(tenant, Idempotency-Key)`.
+   - Consulta `CacheModule` (Redis) para ver se há registro para (escopo do cliente, `Idempotency-Key`).
    - Se necessário, confirma no `PersistenceModule` (DB).
    - Três cenários:
      - **First call**: nenhuma chave encontrada → sinaliza que o fluxo pode seguir com criação.
@@ -198,7 +198,7 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
 
 7. **PersistenceModule — Repositórios de `Payment`**
    - No cenário de first call:
-     - Persiste um novo `Payment` com estado inicial (`CREATED` ou `PENDING`), incluindo `idempotencyKey`, `externalReference`, `tenantId`, `correlationId`.
+     - Persiste um novo `Payment` com estado inicial (mapeado na API como `CREATED` ou `PENDING`; ver data-state), incluindo `idempotencyKey`, `externalReference`, escopo do cliente, `correlationId`.
    - Atualiza a associação `Idempotency-Key -> paymentId` no DB (e opcionalmente no cache).
 
 8. **TransactionsModule — `TransactionsService`**
@@ -215,13 +215,13 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
     - Atualizam o `Payment` para o estado derivado (ex.: `PENDING` → `AUTHORIZED` ou `FAILED`).
 
 11. **PaymentsModule — `PaymentsService`**
-    - Monta DTO de resposta de `Payment`:
+    - Monta DTO de resposta de `Payment` (vocabulário da API: `payer`, `payee`, `status`; dados de `customerId`/`merchantId` e estado interno mapeados):
       - `paymentId`, `status`, `amount`, `currency`, `payer`, `payee`, `paymentMethod` (mascarado), `externalReference`, `idempotencyKey`, timestamps, `correlationId`.
 
 12. **Shared/ObservabilityModule**
     - `ExceptionFilter` garante formato de erro padrão em caso de falha.
     - Interceptor de logging registra:
-      - Rota, método, `tenantId`, `paymentId`, `status`, `errorCode`, latência, `correlationId`.
+      - Rota, método, escopo do cliente, `paymentId`, `status`, `errorCode`, latência, `correlationId`.
 
 13. **PaymentsModule — `PaymentsController`**
     - Retorna resposta HTTP:
@@ -249,7 +249,7 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
 
 5. **PaymentsModule — `PaymentsService`**
    - Usa repositórios via `PersistenceModule` para buscar `Payment` e, se necessário, a última `Transaction` relevante (via `TransactionsModule`).
-   - Aplica checagem de autorização (tenant/cliente pode ver este pagamento?).
+   - Aplica checagem de autorização (cliente autenticado pode ver este pagamento?).
 
 6. **PersistenceModule / TransactionsModule**
    - Executam consultas a DB.
@@ -281,7 +281,7 @@ Focado na lógica transversal de reuso de resultado.
      - Validação de DTO.
 
 3. **PaymentsModule — `PaymentsService` → IdempotencyModule**
-   - Chama `IdempotencyService` com `(tenant, Idempotency-Key, payload canônico)`.
+   - Chama `IdempotencyService` com (escopo do cliente autenticado, `Idempotency-Key`, payload canônico).
 
 4. **IdempotencyModule — `IdempotencyService`**
    - Consulta `CacheModule` / DB para verificar existência de chave.
@@ -330,3 +330,9 @@ Focado na lógica transversal de reuso de resultado.
   - `IdempotencyModule -> CacheModule`.
   - `AuthModule -> Provider de Identidade`.
   - `Shared/ObservabilityModule -> Stack de Observabilidade`.
+
+### 6. Diagrama C4 — Componentes (draw.io)
+
+O diagrama mostra os módulos NestJS dentro do contêiner Payment Hub API e suas dependências, com **sequências numeradas** em cada ligação. Fonte: `docs/c4/diagrams/components.drawio`. Edição em [app.diagrams.net](https://app.diagrams.net). PNG gerado a partir do `.drawio` (ver README em `diagrams/`).
+
+![Diagrama C4 — Componentes](diagrams/components.png)

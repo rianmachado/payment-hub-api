@@ -4,6 +4,21 @@ Este documento descreve o **modelo conceitual de dados e estado** do Payment Hub
 
 ---
 
+## 0. Vocabulário: contrato da API vs. modelo interno
+
+- **Contrato HTTP (API pública)**  
+  A API expõe objetos `payer` e `payee` no body das requisições e nas respostas (com `id` e/ou `externalId`). Esse é o vocabulário visível ao cliente.
+
+- **Modelo interno (persistência)**  
+  Internamente o hub normaliza esses dados em campos de domínio:
+  - `payer` (objeto da API) → **`customerId`** (string persistida no `Payment`).
+  - `payee` (objeto da API) → **`merchantId`** (string persistida no `Payment`).
+
+- **Equivalência**  
+  Ao montar a resposta HTTP, o hub reconstrói os objetos `payer` e `payee` a partir de `customerId` e `merchantId` (e metadados opcionais), garantindo consistência com o contrato da API.
+
+---
+
 ## 1. Entidades conceituais
 
 ### 1.1. `Payment` (Pagamento)
@@ -14,9 +29,9 @@ Este documento descreve o **modelo conceitual de dados e estado** do Payment Hub
   - `businessReference` (string): referência de negócio; recebe o valor de `externalReference` enviado na API (ex.: `invoiceId`, `orderId`).
   - `amount` (decimal): valor total do pagamento.
   - `currency` (string, ISO 4217): moeda (ex.: `BRL`, `USD`).
-  - `status` (enum): estado atual do pagamento (ex.: `PENDING`, `AUTHORIZED`, `CAPTURED`, `CANCELLED`, `FAILED`).
-  - `customerId` (string): identificador do pagador; originado de `payer.id` ou `payer.externalId` do request da API.
-  - `merchantId` (string): identificador do favorecido; originado de `payee.id` ou `payee.externalId` do request da API.
+  - `status` (enum): estado atual do pagamento no **modelo interno** (ex.: `INITIATED`, `PENDING`, `AUTHORIZED`, `CAPTURED`, `CANCELLED`, `FAILED`). Na API são expostos nomes padronizados conforme mapeamento na seção 2.1.
+  - `customerId` (string): identificador do pagador no modelo interno; preenchido a partir de `payer.id` ou `payer.externalId` do contrato da API.
+  - `merchantId` (string): identificador do favorecido no modelo interno; preenchido a partir de `payee.id` ou `payee.externalId` do contrato da API.
   - `providerId` (string): identificação do provedor de pagamento selecionado (ex.: PSP, gateway).
   - `idempotencyKey` (string, opcional): valor do header `Idempotency-Key` usado na criação.
   - `correlationId` (string, opcional): identificador de correlação para rastreio (ex.: valor de `X-Correlation-Id`).
@@ -64,9 +79,11 @@ Este documento descreve o **modelo conceitual de dados e estado** do Payment Hub
 ### 1.3. `IdempotencyRecord` (Registro de Idempotência)
 
 - **Descrição**: Representa o controle de idempotência de requisições recebidas pelo Payment Hub API.
+- **Escopo de idempotência (MVP)**  
+  No MVP, a unicidade da chave idempotente é garantida no **escopo do cliente autenticado** (identidade extraída do token, ex.: `sub` ou `clientId`). Não se exige multi-tenant formal; o campo que identifica o “dono” da chave pode ser nomeado `clientScope` ou `tenantId` conforme implementação, com evolução futura para multi-tenant explícito.
 - **Campos essenciais**
   - `id` (UUID): identificador técnico do registro.
-  - `tenantId` (string): identificador do tenant/cliente; obrigatório para multi-tenant.
+  - `tenantId` (string) ou `clientScope` (string): identificador do escopo da chave — no MVP, o cliente autenticado (ex.: `sub` do JWT); em evolução multi-tenant, o tenant. Obrigatório para unicidade da chave.
   - `idempotencyKey` (string): chave técnica recebida no cabeçalho `Idempotency-Key`.
   - `scope` (string): escopo lógico da key (ex.: `CREATE_PAYMENT`, `CAPTURE_PAYMENT`, `REFUND_PAYMENT`).
   - `businessKey` (string/JSON): chave(s) de negócio associada(s) (ex.: `invoiceId`, ou combinação normalizada).
@@ -80,7 +97,7 @@ Este documento descreve o **modelo conceitual de dados e estado** do Payment Hub
   - `updatedAt` (datetime).
 - **Chaves/uniques e índices conceituais**
   - Chave primária: `id`.
-  - Unique: (`tenantId`, `idempotencyKey`, `scope`) — por tenant e escopo (multi-tenant).
+  - Unique: (`tenantId` ou `clientScope`, `idempotencyKey`, `scope`) — garante uma única resposta por chave no escopo do cliente/tenant.
   - Índices:
     - Índice em `businessKey` para análise de conflitos de negócio.
     - Índice em `expiresAt` para limpeza (TTL/GC).
@@ -153,11 +170,15 @@ Este documento descreve o **modelo conceitual de dados e estado** do Payment Hub
   - `webhook_received` (com payload do provedor).
   - `manual_action` (operações manuais via backoffice, ex.: cancelar, reprocessar).
 
-- **Mapeamento estados internos ↔ API**
-  - A API expõe um subconjunto de estados com nomes padronizados; o modelo interno pode usar nomes adicionais. Mapeamento sugerido:
-    - `CREATED` (API) ↔ `INITIATED` (interno): intenção registrada, ainda não enviada ao provedor.
-    - `SETTLED` (API) ↔ `CAPTURED` (interno): pagamento concluído com sucesso.
-    - `EXPIRED` (interno) → exposto como `FAILED` ou status específico na API, conforme política.
+- **Mapeamento estados internos ↔ API (definitivo)**
+  - A API pública usa um vocabulário de estados explícito; o modelo interno pode usar nomes adicionais. O mapeamento é:
+    - **API `CREATED`** ↔ **interno `INITIATED`**: intenção registrada, ainda não enviada ao provedor. Estado de borda inicial na criação (resposta 201).
+    - **API `PENDING`** ↔ **interno `PENDING`**: em processamento junto ao provedor.
+    - **API `AUTHORIZED`** ↔ **interno `AUTHORIZED`**: valor autorizado, ainda não liquidado.
+    - **API `SETTLED`** ↔ **interno `CAPTURED`**: pagamento concluído com sucesso (valor capturado).
+    - **API `FAILED`** ↔ **interno `FAILED`** (e, se aplicável, **interno `EXPIRED`** exposto como `FAILED` ou status específico conforme política).
+    - **API `CANCELLED`** ↔ **interno `CANCELLED`**.
+  - **Estado inicial na criação**: o estado persistido internamente pode ser `INITIATED` ou `PENDING` conforme o fluxo (ex.: já enviado ao PSP). Na resposta da API expõe-se `CREATED` ou `PENDING` de forma consistente com esse estado interno (evitar ambiguidade: usar um único estado inicial por fluxo na documentação — e.g. “criação síncrona retorna `CREATED` quando ainda não houve chamada ao provedor, ou `PENDING` quando já foi enviado”).
 
 ### 2.2. State machine conceitual de `Transaction`
 
