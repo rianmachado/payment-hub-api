@@ -1,0 +1,197 @@
+----------------------------------------
+AGENTE — SENIOR NODE/NESTJS PROJECT SETUP
+BRANCH — chore/project-setup
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Sua missão é preparar o setup técnico completo do projeto "Payment Hub API" para desenvolvimento local, na branch:
+
+chore/project-setup
+
+A documentação arquitetural do projeto já está consolidada e deve ser tratada como fonte da verdade.
+
+Documentação disponível em:
+
+docs/
+- requirements
+- data-state
+- api/openapi
+- quality
+- roadmap
+- c4
+
+Este passo NÃO implementa funcionalidades de negócio.
+Este passo prepara somente a base técnica do projeto.
+
+----------------------------------------
+OBJETIVO DA BRANCH
+----------------------------------------
+
+Entregar uma base técnica profissional para desenvolvimento local com:
+
+- Node.js 24
+- npm
+- NestJS
+- TypeScript
+- Nest CLI
+- ESLint
+- Prettier
+- .env
+- ConfigModule
+- build local
+- start local
+- start:dev
+- health check
+
+----------------------------------------
+ESCOPO DO SETUP
+----------------------------------------
+
+O setup deve incluir:
+
+1) Bootstrap do projeto NestJS
+- criação do projeto
+- uso de npm
+- compatibilidade com Node 24
+- estrutura mínima inicial
+
+2) Configuração TypeScript
+- tsconfig.json
+- tsconfig.build.json
+- strict mode
+- noImplicitAny
+- rootDir / outDir coerentes
+
+3) Estrutura inicial do projeto
+
+src/
+  main.ts
+  app.module.ts
+  health/
+
+4) Scripts npm
+- start
+- start:dev
+- build
+- lint
+- format
+
+5) ESLint
+- integração com TypeScript
+- integração com NestJS
+- regras básicas de qualidade
+
+6) Prettier
+- configuração de formatação
+
+7) Variáveis de ambiente
+- .env
+- .env.example
+- variáveis mínimas:
+  - PORT
+  - NODE_ENV
+
+8) Configuração NestJS para env
+- uso de ConfigModule
+- estratégia simples e centralizada
+
+9) Health check
+- endpoint GET /health
+- objetivo: validar que a aplicação sobe corretamente
+
+----------------------------------------
+TAREFAS DO AGENTE
+----------------------------------------
+
+1) Propor a estrutura inicial do projeto
+2) Definir os arquivos necessários para setup
+3) Definir a configuração de TypeScript
+4) Definir a configuração de ESLint
+5) Definir a configuração de Prettier
+6) Definir a estrutura de ambiente (.env / .env.example)
+7) Definir os scripts npm
+8) Definir a estratégia de validação local
+9) Criar um DEV Commit Log final para esta branch
+
+----------------------------------------
+FORMATO DE SAÍDA
+----------------------------------------
+
+# 1. Estratégia de Setup
+
+Explique as decisões técnicas adotadas e por que elas vêm antes de qualquer feature.
+
+# 2. Estrutura inicial do projeto
+
+Mostrar a árvore de diretórios inicial.
+
+# 3. Configuração de Tooling
+
+Detalhar:
+- TypeScript
+- ESLint
+- Prettier
+- ConfigModule
+- env files
+
+# 4. Scripts npm
+
+Mostrar todos os scripts necessários para desenvolvimento local.
+
+# 5. Validação do ambiente local
+
+Explicar como validar:
+- npm install
+- npm run build
+- npm run start:dev
+- GET /health
+
+# 6. Plano profissional de commits da branch
+
+Para cada commit, mostrar:
+- Commit
+- Objetivo
+- Escopo
+- Arquivos/pastas prováveis
+- Dependências
+
+# 7. DEV COMMIT LOG FINAL
+
+Gerar o conteúdo completo para o arquivo:
+
+docs/dev-commit-logs/project-setup.md
+
+O arquivo deve conter:
+
+- Nome da branch
+- Objetivo da branch
+- Escopo
+- Lista ordenada dos commits
+- Descrição curta de cada commit
+- Critérios de validação final da branch
+
+Use estes commits como base:
+
+chore(project-bootstrap): bootstrap nestjs project with node 24 and npm
+chore(tooling): configure typescript strict mode
+chore(lint): configure eslint for typescript and nestjs
+chore(format): configure prettier formatting rules
+chore(env): add dotenv configuration and env example
+chore(config): add nestjs config module for environment variables
+chore(scripts): add npm scripts for build start and lint
+chore(health): add health endpoint for local verification
+
+----------------------------------------
+REGRAS IMPORTANTES
+----------------------------------------
+
+- Não implementar módulos de domínio
+- Não implementar DTOs
+- Não implementar controllers de pagamento
+- Não implementar serviços de pagamento
+- Não implementar guards/interceptors/filters de negócio
+- Este passo é somente setup técnico
+- A documentação é fonte da verdade
+- Não escrever código de domínio
+----------------------------------------
