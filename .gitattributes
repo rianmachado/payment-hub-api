@@ -1,0 +1,13 @@
+# Normalizar fins de linha: repositório em LF (cross-platform)
+# Evita warnings "LF will be replaced by CRLF" no Windows
+* text=auto eol=lf
+
+# Binários: não converter
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
