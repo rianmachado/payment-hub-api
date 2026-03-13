@@ -27,9 +27,9 @@ Abaixo, os principais componentes internos da `Payment Hub API`, representados c
   - Módulo de **orquestração de pagamentos**.
   - Componentes:
     - `PaymentsController` — endpoints HTTP:
-      - `POST /payments` (criar).
-      - `GET /payments/{paymentId}` (consultar).
-      - `GET /payments/by-idempotency-key/{idempotencyKey}` (consultar por chave de idempotência).
+      - `POST /v1/payments` (criar).
+      - `GET /v1/payments/{paymentId}` (consultar).
+      - `GET /v1/payments/by-idempotency-key/{idempotencyKey}` (consultar por chave de idempotência).
     - `PaymentsService` — orquestra lógica de alto nível de criação/consulta.
     - DTOs, pipes de validação, mapeadores.
   - Responsabilidades:

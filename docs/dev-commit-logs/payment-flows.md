@@ -69,4 +69,20 @@ Ordem recomendada de commits (Conventional Commits) após as alterações de har
 
 ---
 
+## Preparação para implementação guiada (Implementation-Ready)
+
+13. **docs(review,c4,readme): prepare for guided implementation and AI agents source of truth**
+    - INTEGRATION-REVIEW.md: parágrafo **Fonte de verdade para agentes de IA** — docs em `docs/` como fonte única para implementação; agentes devem seguir §2 (plano guiado) e referências cruzadas; sem pendências críticas bloqueantes.
+    - INTEGRATION-REVIEW §1.1: título ajustado para "Pendências ainda abertas (nenhuma — pronto para implementação guiada)"; texto reforça que itens listados já estão refletidos e que a implementação pode ser iniciada.
+    - context.md: rotas em §4 explicitadas com prefixo `/v1` (POST/GET /v1/payments, GET /v1/payments/by-idempotency-key/{idempotencyKey}).
+    - components.md: rotas do PaymentsController com prefixo `/v1` em M3.
+    - README Implementation Plan: etapa 5 (Controllers) com rotas /v1; etapa 9 (Auth JWT) com "escopo do cliente autenticado" em vez de "tenant".
+
+14. **docs(c4-diagrams): align draw.io and PNG with C4 docs (/v1 routes, client scope)**
+    - context.drawio: rótulo Cliente→Hub com POST/GET /v1/payments, GET /v1/payments/by-idempotency-key/:key; Cache com "escopo do cliente autenticado". context.png regenerado.
+    - container.drawio: edge Cliente→API com GET /v1/payments/by-idempotency-key/:key e GET /v1/health; Cache com "escopo do cliente autenticado". container.png regenerado.
+    - components.drawio: PaymentsModule com "POST/GET /v1/payments, by-idempotency-key"; IdempotencyModule com "escopo cliente autenticado"; CacheModule com "escopo cliente". components.png regenerado.
+
+---
+
 *Gerado pelo agente Documentation Harmonizer e Documentation Final Harmonizer. Não implementa código; apenas documentação.*

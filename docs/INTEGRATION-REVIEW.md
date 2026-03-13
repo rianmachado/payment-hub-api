@@ -2,13 +2,15 @@
 
 Revisão de consistência entre `requirements.md`, C4 (`context.md`, `container.md`, `components.md`), `openapi.md`, `quality.md`, `roadmap.md` e `data-state.md`. Este documento é mantido como revisão viva: pendências resolvidas são movidas para a seção 1.2; apenas itens em aberto permanecem em 1.1.
 
+**Fonte de verdade para agentes de IA:** Os documentos em `docs/` (requirements.md, api/openapi.md, data-state.md, c4/*.md, quality.md, roadmap.md, INTEGRATION-REVIEW.md) constituem a **fonte de verdade única** para implementação do Payment Hub API. Agentos devem seguir o plano de implementação guiada (§2), as referências cruzadas entre documentos e os contratos/estados aqui definidos. A implementação guiada pode ser iniciada; não há pendências críticas bloqueantes.
+
 ---
 
 ## 1. Estado da revisão
 
-### 1.1. Pendências ainda abertas
+### 1.1. Pendências ainda abertas (nenhuma — pronto para implementação guiada)
 
-Nenhuma pendência crítica em aberto após a harmonização final. Os itens abaixo foram objeto de ajuste nesta etapa e estão refletidos nos documentos:
+Nenhuma pendência crítica em aberto após a harmonização final. Os itens abaixo foram objeto de ajuste e **já estão refletidos** nos documentos; a implementação guiada (§2) pode ser iniciada:
 
 - **Alinhamento de versionamento de API**: Prefixo `/v1` adotado em [openapi.md](api/openapi.md) para todos os endpoints de pagamento e health; quality.md e C4 referenciam rotas versionadas.
 - **Harmonização de nomes de serviços**: Padronizado em toda a documentação: `IdempotencyService` (não ReplayService), `ProvidersService` como contrato principal (não ProviderGatewayService); quality.md § 3.4 e INTEGRATION-REVIEW referenciam explicitamente.
@@ -208,6 +210,8 @@ feat(auth): add JWT strategy and validation (iss, aud, exp, iat)
 feat(auth): extract identity and client scope from token into request context
 
 docs: add INTEGRATION-REVIEW with consistency notes and implementation plan
+
+docs(review): declare docs as source of truth for AI agents and mark §1.1 ready for guided implementation
 ```
 
 ---

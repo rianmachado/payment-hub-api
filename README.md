@@ -281,7 +281,7 @@ O plano de implementação segue a ordem de fixação NestJS definida em [docs/r
 
 4. **Services** — PaymentsService, IdempotencyService, TransactionsService, ProvidersService; orquestração e regras de negócio. *Ref.: requirements.md, components.md, data-state.md, quality.md.*
 
-5. **Controllers** — PaymentsController: POST /payments, GET /payments/:paymentId, GET /payments/by-idempotency-key/:idempotencyKey; códigos HTTP conforme OpenAPI. *Ref.: openapi.md, requirements.md, context.md, container.md, quality.md.*
+5. **Controllers** — PaymentsController: POST /v1/payments, GET /v1/payments/:paymentId, GET /v1/payments/by-idempotency-key/:idempotencyKey; códigos HTTP conforme OpenAPI. *Ref.: openapi.md, requirements.md, context.md, container.md, quality.md.*
 
 6. **Exception Filters** — Filtro global; formato { code, message, details?, correlationId }; mapeamento de exceções para status e códigos. *Ref.: requirements.md, openapi.md, quality.md.*
 
@@ -289,6 +289,6 @@ O plano de implementação segue a ordem de fixação NestJS definida em [docs/r
 
 8. **Guards** — Proteção de rotas (JWT; opcional API Key); roles/metadata por rota. *Ref.: requirements.md, quality.md, components.md.*
 
-9. **Auth JWT** — Validação de token (iss, aud, exp, iat); contexto de identidade e tenant; rotação de chaves. *Ref.: requirements.md, quality.md, context.md.*
+9. **Auth JWT** — Validação de token (iss, aud, exp, iat); contexto de identidade e escopo do cliente autenticado; rotação de chaves. *Ref.: requirements.md, quality.md, context.md.*
 
 Cada etapa deve ser implementada e testada antes de avançar; os documentos em `docs/` são a fonte de verdade para contratos, estados e convenções.

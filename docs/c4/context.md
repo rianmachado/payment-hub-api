@@ -68,15 +68,15 @@
 ### 4. Relações de alto nível (Contexto)
 
 - **Cliente da API → Payment Hub API**
-  - `HTTP POST /payments` (criação de pagamento) com:
+  - `HTTP POST /v1/payments` (criação de pagamento) com:
     - `Authorization` (obrigatório).
     - `Idempotency-Key` (obrigatório na criação).
     - `X-Correlation-Id` (opcional; gerado pelo hub se ausente).
     - Body com `payer`, `payee` (vocabulário da API; internamente normalizados para `customerId`/`merchantId`), `amount`, `currency`, `paymentMethod`, `externalReference`, etc.
-  - `HTTP GET /payments/{paymentId}` (consulta de pagamento) com:
+  - `HTTP GET /v1/payments/{paymentId}` (consulta de pagamento) com:
     - `Authorization`.
     - `X-Correlation-Id` (opcional).
-  - `HTTP GET /payments/by-idempotency-key/{idempotencyKey}` (consulta por chave de idempotência) com:
+  - `HTTP GET /v1/payments/by-idempotency-key/{idempotencyKey}` (consulta por chave de idempotência) com:
     - `Authorization`.
     - `X-Correlation-Id` (opcional).
   - Recebe como resposta:
