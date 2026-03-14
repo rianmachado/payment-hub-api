@@ -4,6 +4,8 @@
 
 **Nome:** `planning/implementation-commit-plan`
 
+**Importante:** Os **8 commits** listados neste documento são para a **branch de implementação** (onde o código será escrito). Na branch de planejamento (`planning/implementation-commit-plan`) o histórico deve refletir apenas documentação — por exemplo um commit `docs: add implementation commit plan and DEV commit log`. Se no histórico tiver ficado apenas `feat(modules): scaffold core application modules`, veja a seção **Como corrigir o histórico**, no final deste arquivo.
+
 ## Objetivo da branch
 
 Transformar a documentação consolidada do Payment Hub API em um **plano seguro, incremental e profissional de implementação guiada por commits**. Este passo **não implementa código**; apenas organiza a execução futura das features (criar pagamento, consultar pagamento, idempotência) em uma sequência de commits coerente com NestJS e dependências arquiteturais.
@@ -32,6 +34,38 @@ Transformar a documentação consolidada do Payment Hub API em um **plano seguro
 | 6 | `feat(exception-filters): standardize error handling layer` | Exception Filter global; corpo `{ code, message, details?, correlationId }`; mapeamento de exceções para status/códigos. |
 | 7 | `feat(interceptors): add correlation id logging and response interceptors` | Interceptor de logging (request/response, correlationId, latência); interceptor de timeout e métricas. |
 | 8 | `feat(guards): implement authorization guards` | JwtAuthGuard (e opcional API Key) aplicado às rotas de pagamento; extração de escopo do cliente. |
+
+---
+
+## Comandos Git Commit (registrados)
+
+Comandos a executar **um por vez**, após implementar e validar cada etapa. Ordem obrigatória.
+
+```bash
+# 1
+git add -A && git commit -m "feat(modules): scaffold core application modules"
+
+# 2
+git add -A && git commit -m "feat(dto): implement api contracts and validation layer"
+
+# 3
+git add -A && git commit -m "feat(idempotency): implement idempotency module and key validation"
+
+# 4
+git add -A && git commit -m "feat(payment-service): implement payment orchestration service"
+
+# 5
+git add -A && git commit -m "feat(controller): expose payment endpoints based on openapi specification"
+
+# 6
+git add -A && git commit -m "feat(exception-filters): standardize error handling layer"
+
+# 7
+git add -A && git commit -m "feat(interceptors): add correlation id logging and response interceptors"
+
+# 8
+git add -A && git commit -m "feat(guards): implement authorization guards"
+```
 
 ---
 
@@ -161,6 +195,66 @@ modules (1)
 - [ ] DEV Commit Log (`implementation-commit-plan.md`) completo com lista ordenada, descrição curta por commit, dependências principais e relação com a documentação.
 - [ ] Nenhum código implementado nesta branch; nenhuma feature branch criada.
 - [ ] Documentação em `docs/` permanece a fonte da verdade para as próximas branches de implementação.
+
+---
+
+## Como corrigir o histórico desta branch
+
+Se no histórico da branch `planning/implementation-commit-plan` ficou **apenas um commit** com mensagem tipo `feat(modules): scaffold core application modules`, isso está errado: esta branch entrega **documentação**, não código. Use uma das opções abaixo.
+
+### Opção A — Corrigir a mensagem do último commit (mantém 1 commit)
+
+Se a branch já foi enviada e você quer apenas corrigir a mensagem:
+
+```bash
+git commit --amend -m "docs: add implementation commit plan and DEV commit log (8-step plan)"
+git push --force-with-lease
+```
+
+Assim o histórico fica com um commit que descreve corretamente o que foi feito (planejamento/documentação).
+
+### Opção B — Refazer o histórico com 8 commits (recomendado)
+
+Para que o histórico desta branch reflita os 8 passos do plano, desfaça o último commit e refaça em 8 commits, um por etapa. Execute **na raiz do repositório**:
+
+```bash
+# 1. Desfazer o último commit (alterações ficam no working tree)
+git reset --soft HEAD~1
+
+# 2. Desmarcar tudo
+git reset
+
+# 3. Fazer 8 commits, um por arquivo de etapa (use os arquivos em docs/dev-commit-logs/implementation-steps/)
+git add docs/dev-commit-logs/implementation-steps/step-01-modules.md
+git commit -m "docs(plan): register step 1 - modules"
+
+git add docs/dev-commit-logs/implementation-steps/step-02-dto.md
+git commit -m "docs(plan): register step 2 - dto"
+
+git add docs/dev-commit-logs/implementation-steps/step-03-idempotency.md
+git commit -m "docs(plan): register step 3 - idempotency"
+
+git add docs/dev-commit-logs/implementation-steps/step-04-payment-service.md
+git commit -m "docs(plan): register step 4 - payment-service"
+
+git add docs/dev-commit-logs/implementation-steps/step-05-controller.md
+git commit -m "docs(plan): register step 5 - controller"
+
+git add docs/dev-commit-logs/implementation-steps/step-06-exception-filters.md
+git commit -m "docs(plan): register step 6 - exception-filters"
+
+git add docs/dev-commit-logs/implementation-steps/step-07-interceptors.md
+git commit -m "docs(plan): register step 7 - interceptors"
+
+git add docs/dev-commit-logs/implementation-steps/step-08-guards.md
+git commit -m "docs(plan): register step 8 - guards"
+
+# 4. Incluir o restante da documentação do plano
+git add docs/
+git commit -m "docs: add implementation commit plan index and full DEV commit log"
+```
+
+Assim o `git log` mostrará 9 commits coerentes com o plano (8 etapas + índice/log completo).
 
 ---
 
