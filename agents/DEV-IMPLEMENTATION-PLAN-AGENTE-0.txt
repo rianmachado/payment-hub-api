@@ -1,0 +1,142 @@
+----------------------------------------
+AGENTE — SENIOR NESTJS IMPLEMENTATION PLANNER
+BRANCH — planning/implementation-commit-plan
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Sua missão é gerar um plano profissional de implementação guiada por commits para o projeto "Payment Hub API", na branch:
+
+planning/implementation-commit-plan
+
+O projeto já possui:
+- documentação arquitetural consolidada
+- branch de setup técnico concluída
+- ambiente local funcionando
+
+A documentação é a fonte da verdade.
+
+Documentação disponível em:
+
+docs/
+- requirements
+- data-state
+- api/openapi
+- quality
+- roadmap
+- c4
+- INTEGRATION-REVIEW
+- dev-commit-logs/project-setup.md
+
+----------------------------------------
+OBJETIVO DA BRANCH
+----------------------------------------
+
+Transformar a documentação consolidada em um plano seguro, incremental e profissional de implementação guiada por commits.
+
+Este passo NÃO implementa código.
+Este passo organiza a execução futura das features.
+
+----------------------------------------
+ESCOPO DO PLANEJAMENTO
+----------------------------------------
+
+O plano deve organizar a implementação do Payment Hub API considerando os 3 fluxos:
+
+1) Criar pagamento
+2) Consultar pagamento
+3) Idempotência de pagamento
+
+A ordem de implementação deve respeitar NestJS e dependências arquiteturais.
+
+A sequência esperada é:
+
+1) modules
+2) dto
+3) idempotency
+4) payment-service
+5) controller
+6) exception-filters
+7) interceptors
+8) guards
+
+Se necessário, detalhar subetapas.
+
+----------------------------------------
+TAREFAS DO AGENTE
+----------------------------------------
+
+1) Explicar a estratégia geral de implementação
+2) Justificar a ordem dos commits
+3) Mapear dependências entre commits
+4) Relacionar cada commit com a documentação
+5) Sugerir estrutura final de pastas
+6) Criar um DEV Commit Log final para esta branch
+
+----------------------------------------
+FORMATO DE SAÍDA
+----------------------------------------
+
+# 1. Estratégia de implementação
+
+Explique por que essa ordem é a mais segura e consistente para NestJS.
+
+# 2. Plano profissional de implementação
+
+Para cada commit, mostrar:
+- Commit
+- Objetivo
+- Escopo
+- Arquivos/pastas prováveis
+- Dependências
+- Referência documental
+
+# 3. Estrutura final sugerida do projeto
+
+Mostrar a árvore de diretórios esperada após implementação.
+
+# 4. Estratégia de execução das futuras branches
+
+Explicar como esse plano será usado nas próximas branches de feature.
+
+# 5. DEV COMMIT LOG FINAL
+
+Gerar o conteúdo completo para o arquivo:
+
+docs/dev-commit-logs/implementation-commit-plan.md
+
+O arquivo deve conter:
+
+- Nome da branch
+- Objetivo da branch
+- Escopo
+- Lista ordenada dos commits planejados
+- Descrição curta de cada commit
+- Dependências principais
+- Relação com a documentação
+- Critério de pronto da branch
+
+Use estes commits como base:
+
+feat(modules): scaffold core application modules
+feat(dto): implement api contracts and validation layer
+feat(idempotency): implement idempotency module and key validation
+feat(payment-service): implement payment orchestration service
+feat(controller): expose payment endpoints based on openapi specification
+feat(exception-filters): standardize error handling layer
+feat(interceptors): add correlation id logging and response interceptors
+feat(guards): implement authorization guards
+
+Se identificar necessidade de subcommits ou refinamentos, proponha-os.
+
+----------------------------------------
+REGRAS IMPORTANTES
+----------------------------------------
+
+- Não implementar código
+- Não criar feature branch ainda
+- Não alterar domínio
+- Não criar controllers/DTOs/services reais
+- Este passo é apenas planejamento profissional da implementação
+- A documentação é a fonte da verdade
+----------------------------------------
