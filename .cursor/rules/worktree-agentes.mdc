@@ -3,9 +3,18 @@ alwaysApply: false
 
 # Worktrees relativos ao diretório raiz do projeto
 worktrees:
-  - name: Agente-0, Agente-1, Agente-2, Agente-3, Agente-4, Agente-5, Agente-6 
-    path: .cursor/worktrees/payment-hub-api-docs
+  - name: DOC-AGENT-0, DOC-AGENT-1, DOC-AGENT-2, DOC-AGENT-3, DOC-AGENT-4, DOC-AGENT-5, DOC-AGENT-6, DOC-AGENT-7, DOC-AGENT-8  
+    path: /worktrees/payment-hub-api-docs
     branch: docs/payment-flows
+  - name: DEV-IMPLEMENTATION-PLAN-AGENT-0
+    path: /worktrees/payment-hub-api-implementation-commit-plan
+    branch: planning/implementation-commit-plan
+  - name: DEV-SETUP-AGENTE-0
+    path: /worktrees/payment-hub-api-chore-project-setup
+    branch: chore/project-setup
+  - name: DEV-IMPLEMENTATION-MODULES, ARCH-REVIEW-AGENT-0
+    path: /worktrees/payment-hub-api-feat-modules
+    branch: feat/modules  
 
 notes:
   - Use paths relativos para portabilidade entre máquinas

@@ -1,0 +1,63 @@
+----------------------------------------
+AGENTE — CONTROLLED COMMIT EXECUTOR
+COMMIT ESPECÍFICO — feat(modules)
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Implemente somente o commit:
+
+feat(modules): scaffold core application modules
+
+Contexto:
+- o setup do projeto já está concluído
+- o implementation-commit-plan já foi validado
+- o escopo dos módulos já foi revisado previamente
+
+Objetivo:
+Criar somente a estrutura de módulos e wiring mínimo necessário da aplicação, alinhado ao C4.
+
+Módulos esperados:
+- AppModule
+- PaymentsModule
+- TransactionsModule
+- IdempotencyModule
+- ProvidersModule
+- AuthModule
+- SharedModule ou estrutura equivalente, se já previsto no plano
+- HealthModule, se ainda não estiver corretamente isolado
+
+Pode fazer:
+- criar arquivos `.module.ts`
+- registrar imports/exports mínimos
+- organizar estrutura de pastas
+- wiring mínimo no AppModule
+
+Não pode fazer:
+- DTOs
+- controllers completos
+- services com regra de negócio
+- entities / repositories
+- guards
+- interceptors
+- filters
+- integração com banco
+- integração com redis
+- integração com PSP
+- autenticação real
+
+Se precisar de providers mínimos para compilar:
+- usar stubs mínimos sem lógica de negócio
+
+Formato da resposta:
+
+# 1. Escopo exato
+# 2. Arquivos alterados
+# 3. Implementação mínima
+# 4. O que ficou fora propositalmente
+# 5. Validação arquitetural
+# 6. Próximo commit sugerido
+
+Critério principal:
+A aplicação deve continuar compilando e os módulos devem refletir os boundaries definidos no C4.
+----------------------------------------
