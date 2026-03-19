@@ -1,0 +1,93 @@
+----------------------------------------
+AGENTE — CONTROLLED COMMIT EXECUTOR
+COMMIT ESPECÍFICO — feat(controller)
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Implemente somente o commit:
+
+feat(controller): expose payment endpoints based on openapi specification
+
+Contexto:
+- o setup do projeto já está concluído
+- o implementation-commit-plan já foi validado
+- feat(modules), feat(dto), feat(idempotency) e feat(payment-service) já foram concluídos com sucesso
+- esta etapa deve seguir rigorosamente a documentação do projeto
+
+Documentação fonte da verdade:
+
+docs/
+- requirements.md
+- data-state.md
+- api/openapi.md
+- quality.md
+- roadmap.md
+- c4/components.md
+- dev-commit-logs/implementation-commit-plan.md
+
+Objetivo:
+Implementar somente a camada HTTP do PaymentsController com base no OpenAPI, mantendo o controller fino e delegando a lógica ao PaymentsService.
+
+Escopo esperado:
+- criação/ajuste do PaymentsController
+- exposição dos endpoints documentados
+- recebimento de body, params e headers necessários
+- uso dos DTOs já existentes
+- delegação para PaymentsService
+- retorno coerente com os contratos da API, sem antecipar exception-filters, interceptors ou guards
+
+Entram neste commit:
+- endpoints documentados para pagamentos
+- decorators HTTP do NestJS
+- binding de params, body e headers
+- conexão entre controller e PaymentsService
+- uso dos DTOs de request/response já definidos
+- wiring mínimo necessário no módulo correspondente
+
+Não pode fazer:
+- implementar regra de negócio no controller
+- duplicar lógica do PaymentsService
+- implementar exception filters
+- implementar interceptors
+- implementar guards
+- implementar autenticação real
+- alterar OpenAPI
+- criar endpoints fora do contrato documentado
+- mover validação de borda para lógica manual no controller sem necessidade
+- acoplar diretamente o controller a persistence, PSP ou lógica interna indevida
+
+Se houver dependência de commits futuros:
+- manter o controller mínimo
+- usar o service já existente
+- não antecipar comportamento de segurança, observabilidade ou erro global
+
+Formato da resposta:
+
+# 1. Escopo exato do commit
+- objetivo
+- o que entra
+- o que não entra
+
+# 2. Arquivos que serão criados ou alterados
+
+# 3. Implementação mínima
+Mostrar somente o código necessário para este commit.
+
+# 4. Limites aplicados
+Explicar claramente o que ficou fora propositalmente.
+
+# 5. Validação arquitetural
+Explicar como o commit respeita:
+- openapi
+- requirements
+- quality
+- implementation plan
+
+# 6. Próximo commit sugerido
+Apenas sugerir.
+Não implementar.
+
+Critério principal:
+O PaymentsController deve expor os endpoints documentados de forma fina, limpa e alinhada ao OpenAPI, sem assumir responsabilidades de service, filters, interceptors ou guards.
+----------------------------------------

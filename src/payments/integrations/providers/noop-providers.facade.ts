@@ -17,4 +17,3 @@ export class NoopProvidersFacade implements ProvidersFacade {
     return { paymentStatus: 'PENDING', completedAt: null };
   }
 }
-

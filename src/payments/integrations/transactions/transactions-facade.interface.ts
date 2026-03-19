@@ -1,6 +1,4 @@
-export const TRANSACTIONS_FACADE = Symbol(
-  'TRANSACTIONS_FACADE',
-);
+export const TRANSACTIONS_FACADE = Symbol('TRANSACTIONS_FACADE');
 
 export interface CreateInitialTransactionInput {
   paymentId: string;
@@ -16,4 +14,3 @@ export interface TransactionsFacade {
     input: CreateInitialTransactionInput,
   ): Promise<CreateInitialTransactionResult>;
 }
-

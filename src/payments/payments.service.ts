@@ -9,14 +9,8 @@ import { createHash } from 'node:crypto';
 import { IdempotencyService } from '../idempotency/idempotency.service';
 import { PartyDto } from './dto/common/party.dto';
 import { CreatePaymentRequestDto } from './dto/requests/create-payment.request.dto';
-import {
-  CreatePaymentResponseDto,
-  PaymentResponseDto,
-} from './dto/responses/payment.response.dto';
-import {
-  mapInternalStatusToApiStatus,
-  PaymentAggregate,
-} from './contracts/payment.types';
+import { CreatePaymentResponseDto, PaymentResponseDto } from './dto/responses/payment.response.dto';
+import { mapInternalStatusToApiStatus, PaymentAggregate } from './contracts/payment.types';
 import { PAYMENTS_STORE, PaymentsStore } from './storage/payments-store.interface';
 import {
   TRANSACTIONS_FACADE,
@@ -60,9 +54,7 @@ export class PaymentsService {
     this.idempotencyService.assertNoConflict(decision);
 
     if (decision.kind === 'replay') {
-      const replayPayment = await this.paymentsStore.findByPaymentId(
-        decision.record.paymentId,
-      );
+      const replayPayment = await this.paymentsStore.findByPaymentId(decision.record.paymentId);
 
       if (!replayPayment) {
         throw new NotFoundException({
@@ -93,19 +85,16 @@ export class PaymentsService {
       },
       externalReference: input.request.externalReference ?? null,
       metadata: input.request.metadata,
-      idempotencyKey: this.idempotencyService.validateIdempotencyKey(
-        input.idempotencyKey,
-      ),
+      idempotencyKey: this.idempotencyService.validateIdempotencyKey(input.idempotencyKey),
       correlationId: input.correlationId,
     });
 
     // Baseline controlado: instancia uma transacao e dispara uma transicao inicial
     // via ProvidersFacade (stub). No replay, este caminho nao e executado.
-    const transaction =
-      await this.transactionsFacade.createInitialTransaction({
-        paymentId: payment.id,
-        correlationId: input.correlationId,
-      });
+    const transaction = await this.transactionsFacade.createInitialTransaction({
+      paymentId: payment.id,
+      correlationId: input.correlationId,
+    });
 
     const providerOutcome = await this.providersFacade.processPaymentIntent({
       paymentId: payment.id,
@@ -155,9 +144,7 @@ export class PaymentsService {
     clientScope: string;
     idempotencyKey: string;
   }): Promise<PaymentResponseDto> {
-    const normalizedKey = this.idempotencyService.validateIdempotencyKey(
-      input.idempotencyKey,
-    );
+    const normalizedKey = this.idempotencyService.validateIdempotencyKey(input.idempotencyKey);
     const payment = await this.paymentsStore.findByScopedIdempotencyKey({
       clientScope: input.clientScope,
       idempotencyKey: normalizedKey,
@@ -166,8 +153,7 @@ export class PaymentsService {
     if (!payment) {
       throw new NotFoundException({
         code: IDEMPOTENCY_ERROR_CODE_NOT_FOUND,
-        message:
-          'Nenhum pagamento encontrado para a chave de idempotencia informada.',
+        message: 'Nenhum pagamento encontrado para a chave de idempotencia informada.',
         details: { idempotencyKey: normalizedKey },
       });
     }
@@ -197,10 +183,7 @@ export class PaymentsService {
     return value;
   }
 
-  private resolvePartyIdentifier(
-    party: PartyDto,
-    role: 'payer' | 'payee',
-  ): string {
+  private resolvePartyIdentifier(party: PartyDto, role: 'payer' | 'payee'): string {
     const value = party.id ?? party.externalId;
     if (!value || value.trim().length === 0) {
       throw new BadRequestException({
