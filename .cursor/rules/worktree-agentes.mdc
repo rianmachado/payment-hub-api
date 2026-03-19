@@ -27,6 +27,9 @@ worktrees:
     path: /worktrees/payment-hub-api-feat-idempotency
     branch: feat/modules
 
+  - name: agents/dev/implementation-executor/payment-service/AGENT-0.txt, agents/dev/architecture-executor/payment-service/REVIEW-AGENTE-0.txt, agents/dev/architecture-executor/payment-service/ADJUSTMENTS-AGENT-0.txt
+    path: /worktrees/payment-hub-api-feat-idempotency
+    branch: feat/modules
 
 notes:
   - Use paths relativos para portabilidade entre máquinas
