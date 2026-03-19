@@ -1,0 +1,67 @@
+----------------------------------------
+PROMPT DE AJUSTES — ARQUITETURA
+COMMIT EM REVISÃO — feat(payment-service)
+----------------------------------------
+
+Você é um Arquiteto de Software / Staff Engineer especialista em Node.js, NestJS e TypeScript.
+
+Objetivo:
+Fornecer orientacoes objetivas para ajustar o commit `feat(payment-service)` antes de commit/merge, respeitando estritamente o boundary da camada de orquestração do PaymentsService conforme o plano (docs) e sem implementar controller, filters, interceptors, guards ou PSP real.
+
+Fonte da verdade (docs/):
+- `docs/requirements.md`
+- `docs/data-state.md`
+- `docs/api/openapi.md`
+- `docs/quality.md`
+- `docs/c4/components.md` (especialmente o M3 PaymentsModule)
+
+----------------------------------------
+# 1) Ajustes obrigatórios (bloqueantes)
+
+1. Remover acoplamento HTTP do `PaymentsService`
+   - O `PaymentsService` nao deve “imitar controller”.
+   - Ajustar a assinatura/retorno dos metodos para que o service **nao retorne `statusCode`**.
+   - O fluxo de criacao deve retornar somente dados do domínio/DTO (ex.: `CreatePaymentResponseDto`) e um sinal interno (ex.: `idempotencyReplay: true`) para o controller decidir se retorna `201` ou `200`.
+   - Garantir que a responsabilidade de “resposta HTTP completa” permaneça para o controller (commit futuro).
+
+2. Encaixe mínimo com `Transactions` e `Providers` (stub/injeção)
+   - Mesmo sem implementar a integração final (PSP real), o `PaymentsService` precisa passar por uma etapa mínima de orquestração que encadeie o resto do domínio:
+     - injeção de abstrações/stubs mínimos de `TransactionsService` e `ProvidersService` (ou equivalente).
+     - no caminho `first_call`, executar uma chamada stub coerente com a orquestração (por exemplo: criar/preparar uma transacao e preparar a mudança inicial de estado suportada pelo baseline).
+     - no caminho `replay idempotente`, garantir que o PSP/provedor nao seja acionado (e, portanto, o stub de providers nao deve ser chamado no replay).
+   - Nao deixe o fluxo apenas com `TODO` sem um “hook” mínimo de integração.
+
+----------------------------------------
+# 2) Ajustes recomendados (não bloqueantes)
+
+1. Fail-fast para invariantes do DTO
+   - Se `payer`/`payee` nao contiverem `id` nem `externalId`, evitar “silenciosamente” persistir identificadores vazios.
+   - Fazer o `PaymentsService` lançar excecao/erro consistente (código `PAYMENT_VALIDATION_ERROR` ou equivalente), evitando criar/consultar pagamentos inválidos por dados incompletos.
+
+2. Padronizar mensagens/textos de erro
+   - Manter consistência textual (incluindo acentos e tom) para reduzir divergências no tratamento/observabilidade.
+
+----------------------------------------
+# 3) Restrições
+
+- Nao implementar controller completo.
+- Nao implementar exception filters.
+- Nao implementar interceptors.
+- Nao implementar guards.
+- Nao implementar autenticação real.
+- Nao alterar OpenAPI.
+- Nao inventar endpoints HTTP.
+- Nao integrar PSP real fora do estritamente necessário (usar apenas stubs).
+
+----------------------------------------
+# 4) Critério de validação local
+
+Executar:
+- `npm run build`
+
+Concluir como “ok” quando:
+- o build compilar sem erros;
+- o `PaymentsService` nao retornar `statusCode`;
+- o fluxo de criacao passar por stubs/injeções coerentes para `Transactions` e `Providers`;
+- o replay idempotente nao acionar providers/PSP.
+----------------------------------------

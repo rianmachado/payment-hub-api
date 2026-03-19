@@ -1,0 +1,99 @@
+----------------------------------------
+AGENTE — CONTROLLED COMMIT EXECUTOR
+COMMIT ESPECÍFICO — feat(payment-service)
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Implemente somente o commit:
+
+feat(payment-service): implement payment orchestration service
+
+Contexto:
+- o setup do projeto já está concluído
+- o implementation-commit-plan já foi validado
+- feat(modules), feat(dto) e feat(idempotency) já foram concluídos com sucesso
+- esta etapa deve seguir rigorosamente a documentação do projeto
+
+Documentação fonte da verdade:
+
+docs/
+- requirements.md
+- data-state.md
+- api/openapi.md
+- quality.md
+- roadmap.md
+- c4/components.md
+- dev-commit-logs/implementation-commit-plan.md
+
+Objetivo:
+Implementar somente a camada de orquestração do pagamento em nível de service, sem antecipar a camada HTTP completa e sem extrapolar para commits futuros.
+
+Escopo esperado:
+- criação/ajuste do PaymentsService
+- orquestração do fluxo de criação de pagamento
+- orquestração do fluxo de consulta de pagamento
+- integração mínima com IdempotencyService já existente
+- uso de abstrações/stubs mínimos quando dependências futuras ainda não estiverem prontas
+- preparação da camada de aplicação para uso futuro pelo controller
+
+Entram neste commit:
+- PaymentsService com métodos coerentes com os fluxos documentados
+- composição mínima com serviços já existentes, especialmente idempotência
+- contratos internos mínimos necessários para a orquestração
+- lógica de alto nível para:
+  - iniciar criação de pagamento
+  - consultar pagamento por paymentId
+  - consultar pagamento por idempotency key, se isso já estiver no plano desta etapa
+- mapeamento básico entre DTOs/contratos e a camada de aplicação, sem transformar o service em controller
+- stubs/TODOs claros quando houver dependência de persistence completa, provider real ou controller futuro
+
+Não pode fazer:
+- implementar controller completo
+- implementar exception filters
+- implementar interceptors
+- implementar guards
+- implementar autenticação real
+- alterar OpenAPI
+- inventar endpoints
+- implementar integração final com PSP fora do estritamente necessário
+- acoplar fortemente a camada de aplicação à camada HTTP
+- mover validações de borda do DTO para o service sem necessidade
+- implementar respostas HTTP completas nesta etapa
+
+Se houver dependência de commits futuros:
+- criar abstrações mínimas
+- usar stubs mínimos
+- deixar TODO explícito
+- não antecipar comportamento final de camadas futuras
+
+Formato da resposta:
+
+# 1. Escopo exato do commit
+- objetivo
+- o que entra
+- o que não entra
+
+# 2. Arquivos que serão criados ou alterados
+
+# 3. Implementação mínima
+Mostrar somente o código necessário para este commit.
+
+# 4. Limites aplicados
+Explicar claramente o que ficou fora propositalmente.
+
+# 5. Validação arquitetural
+Explicar como o commit respeita:
+- requirements
+- data-state
+- openapi
+- quality
+- implementation plan
+
+# 6. Próximo commit sugerido
+Apenas sugerir.
+Não implementar.
+
+Critério principal:
+O PaymentsService deve ficar pronto como camada de orquestração, sem antecipar responsabilidades de controller, filters, interceptors ou guards.
+----------------------------------------
