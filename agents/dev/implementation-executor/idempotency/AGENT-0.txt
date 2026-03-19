@@ -1,0 +1,94 @@
+----------------------------------------
+AGENTE — CONTROLLED COMMIT EXECUTOR
+COMMIT ESPECÍFICO — feat(idempotency)
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Implemente somente o commit:
+
+feat(idempotency): implement idempotency module and key validation
+
+Contexto:
+- o setup do projeto já está concluído
+- o implementation-commit-plan já foi validado
+- feat(modules) e feat(dto) já foram concluídos com sucesso
+- esta etapa deve seguir rigorosamente a documentação do projeto
+
+Documentação fonte da verdade:
+
+docs/
+- requirements.md
+- data-state.md
+- api/openapi.md
+- quality.md
+- roadmap.md
+- c4/components.md
+- dev-commit-logs/implementation-commit-plan.md
+
+Objetivo:
+Implementar somente a base do módulo de idempotência e a validação da Idempotency-Key, sem antecipar a orquestração completa do pagamento.
+
+Escopo esperado:
+- estrutura do IdempotencyModule
+- IdempotencyService com responsabilidades mínimas e bem delimitadas
+- contratos internos mínimos necessários para idempotência
+- validação da presença/formato da Idempotency-Key para o fluxo de criação
+- base para diferenciar replay e conflito, sem implementar toda a lógica futura do payment-service
+- stubs/TODOs claros quando houver dependência de commits futuros
+
+Entram neste commit:
+- criação/ajuste do IdempotencyModule
+- criação do IdempotencyService
+- tipos/interfaces mínimos relacionados ao comportamento de idempotência
+- validação mínima da chave de idempotência
+- estrutura inicial para comparar chave e sinalizar replay/conflito
+- organização de pastas/arquivos do contexto de idempotência
+
+Não pode fazer:
+- implementar controller completo
+- implementar payment-service completo
+- implementar integração real com PSP
+- implementar persistence completa fora do estritamente necessário
+- implementar entities/repositories completos se isso pertencer à etapa TypeORM
+- implementar guards/interceptors/filters
+- alterar OpenAPI
+- inventar headers, campos ou comportamentos fora da documentação
+- acoplar a etapa à lógica completa de criação de pagamento
+
+Se houver dependência de commits futuros:
+- criar abstrações mínimas
+- usar stubs mínimos
+- deixar TODO explícito
+- não antecipar comportamento final
+
+Formato da resposta:
+
+# 1. Escopo exato do commit
+- objetivo
+- o que entra
+- o que não entra
+
+# 2. Arquivos que serão criados ou alterados
+
+# 3. Implementação mínima
+Mostrar somente o código necessário para este commit.
+
+# 4. Limites aplicados
+Explicar claramente o que ficou fora propositalmente.
+
+# 5. Validação arquitetural
+Explicar como o commit respeita:
+- requirements
+- data-state
+- openapi
+- quality
+- implementation plan
+
+# 6. Próximo commit sugerido
+Apenas sugerir.
+Não implementar.
+
+Critério principal:
+A base de idempotência deve ficar pronta e isolada, sem antecipar a orquestração completa do pagamento.
+----------------------------------------
