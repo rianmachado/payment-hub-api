@@ -1,0 +1,78 @@
+----------------------------------------
+AGENTE — IMPLEMENTATION ADJUSTMENTS EXECUTOR
+COMMIT EM AJUSTE — feat(idempotency)
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Aplique ajustes na implementação do commit:
+
+feat(idempotency): implement idempotency module and key validation
+
+Contexto:
+- feat(modules), feat(dto) e feat(idempotency) já foram implementados
+- a revisão arquitetural aprovou com ajustes
+- este ajuste deve permanecer estritamente no escopo de idempotência
+
+Documentação fonte da verdade:
+- docs/requirements.md
+- docs/data-state.md
+- docs/api/openapi.md
+- docs/quality.md
+- docs/c4/components.md
+- docs/dev-commit-logs/implementation-commit-plan.md
+
+Objetivo:
+Aplicar os ajustes identificados na revisão, sem antecipar responsabilidades de commits futuros.
+
+Ajustes obrigatórios antes do commit/merge:
+1) Normalizar uso da Idempotency-Key após validação
+- hoje existe validação com trim para vazio, mas o valor pode ser persistido/consultado com espaços laterais
+- normalize (trim) e use SEMPRE a chave normalizada em:
+  - validação de entrada
+  - leitura no store
+  - persistência no store
+  - comparação de cenários de replay/conflito
+- evitar comportamento inconsistente para requests semanticamente iguais
+
+Ajustes recomendados mas não bloqueantes:
+2) Centralizar códigos de erro do módulo de idempotência em constantes internas
+- evitar strings duplicadas e risco de typo
+- manter os mesmos códigos já definidos na documentação (não inventar novos)
+
+3) Documentar limitação do store in-memory
+- comentário curto e explícito indicando que:
+  - é implementação transitória
+  - não garante consistência multi-instância
+  - será substituída por persistência/caching real em etapa futura
+
+4) (Opcional, se estrutura de testes já existir) adicionar testes unitários mínimos
+- cenários:
+  - first_call
+  - replay
+  - conflict
+- sem criar suíte extensa e sem depender de payment-service/controller
+
+Restrições:
+- não implementar payment-service
+- não implementar controller
+- não implementar integração real com PSP
+- não implementar TypeORM completo
+- não implementar guards/interceptors/filters
+- não alterar OpenAPI
+- não inventar headers/campos/comportamentos fora da documentação
+
+Critérios de aceite:
+- Idempotency-Key normalizada de ponta a ponta no módulo
+- comportamento first_call/replay/conflict preservado
+- sem extrapolar escopo do commit feat(idempotency)
+- código claro, pequeno e consistente com arquitetura modular
+
+Formato da resposta:
+# 1. Escopo aplicado
+# 2. Arquivos alterados
+# 3. Mudanças realizadas (somente o necessário)
+# 4. Itens recomendados aplicados (ou justificativa se não aplicados)
+# 5. Validação final de aderência ao escopo
+
+----------------------------------------
