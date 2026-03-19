@@ -25,11 +25,15 @@ worktrees:
 
   - name: agents/dev/implementation-executor/idempotency/AGENT-0.txt, agents/dev/architecture-executor/idempotency/REVIEW-AGENTE-0.txt, agents/dev/architecture-executor/idempotency/ADJUSTMENTS-AGENT-0.txt
     path: /worktrees/payment-hub-api-feat-idempotency
-    branch: feat/modules
+    branch: feat/idempotency
 
   - name: agents/dev/implementation-executor/payment-service/AGENT-0.txt, agents/dev/architecture-executor/payment-service/REVIEW-AGENTE-0.txt, agents/dev/architecture-executor/payment-service/ADJUSTMENTS-AGENT-0.txt
-    path: /worktrees/payment-hub-api-feat-idempotency
-    branch: feat/modules
+    path: /worktrees/payment-hub-api-feat-payment-service
+    branch: feat/payment-service
+
+  - name: agents/dev/implementation-executor/controller/AGENT-0.txt, agents/dev/architecture-executor/controller/REVIEW-AGENTE-0.txt, agents/dev/architecture-executor/controller/ADJUSTMENTS-AGENT-0.txt
+    path: /worktrees/payment-hub-api-feat-controller
+    branch: feat/controller
 
 notes:
   - Use paths relativos para portabilidade entre máquinas

@@ -1,0 +1,89 @@
+----------------------------------------
+AGENTE — DEV IMPLEMENTATION (CONTROLLER FIXES)
+COMMIT ALVO — feat(controller)
+----------------------------------------
+
+Você é um Senior Engineer em Node.js/NestJS/TypeScript.
+
+Contexto:
+- O commit `feat(controller): expose payment endpoints based on openapi specification` foi revisado.
+- A revisão resultou em **APROVADO COM AJUSTES**.
+- Sua tarefa é aplicar **somente** os ajustes abaixo, mantendo foco estrito na camada HTTP/controller (sem antecipar exception filter, interceptor, guard ou auth real).
+
+Arquivos-alvo principais:
+- `src/payments/payments.controller.ts`
+- `src/payments/payments.module.ts` (somente se necessário ao ajuste)
+- (apenas se necessário) DTOs/params já existentes para binding de query
+
+Fonte de verdade:
+- `docs/api/openapi.md`
+- `docs/requirements.md`
+- `docs/quality.md`
+- `docs/c4/components.md`
+- `docs/dev-commit-logs/implementation-commit-plan.md` (etapa feat(controller))
+
+Objetivo:
+Implementar os ajustes obrigatórios e os recomendados sem quebrar o escopo do commit `feat(controller)`.
+
+----------------------------------------
+AJUSTES OBRIGATÓRIOS (BLOQUEANTES)
+----------------------------------------
+
+1) Corrigir conflito de roteamento entre GET dinâmico e GET estático
+- Garantir que `GET /v1/payments/by-idempotency-key/:idempotencyKey` não seja capturado por `GET /v1/payments/:paymentId`.
+- Aplicar uma abordagem válida:
+  - reordenar as rotas para declarar primeiro `by-idempotency-key/:idempotencyKey` e depois `:paymentId`;
+  OU
+  - restringir explicitamente a rota `:paymentId` para UUID no path.
+- Resultado esperado: endpoint por idempotency key sempre acessível conforme OpenAPI.
+
+2) Preservar contrato HTTP do commit
+- Manter os 3 endpoints previstos:
+  - `POST /v1/payments`
+  - `GET /v1/payments/:paymentId`
+  - `GET /v1/payments/by-idempotency-key/:idempotencyKey`
+- Sem invenção de novos endpoints.
+
+----------------------------------------
+AJUSTES RECOMENDADOS (NÃO BLOQUEANTES)
+----------------------------------------
+
+3) Incluir binding de query param `expand` no endpoint de consulta por `paymentId`
+- Em `GET /v1/payments/:paymentId`, aceitar `expand` via `@Query(...)` para aderência explícita ao contrato.
+- Pode ser inicialmente pass-through/ignorado no service, sem lógica adicional complexa.
+
+4) Manter controller fino e sem lógica de negócio
+- Se houver repetição utilitária (ex.: correlation/clientScope), manter simples e dentro do escopo do commit.
+- Não mover para middleware/interceptor neste momento.
+
+----------------------------------------
+REGRAS
+----------------------------------------
+
+- Não implementar regra de negócio no controller.
+- Não alterar OpenAPI/documentação.
+- Não introduzir exception filters, interceptors, guards ou autenticação real.
+- Não acoplar controller a persistence/PSP.
+- Não extrapolar para commits futuros.
+- Preservar estilo NestJS idiomático com decorators HTTP e DTOs já definidos.
+
+----------------------------------------
+VALIDAÇÃO FINAL OBRIGATÓRIA
+----------------------------------------
+
+1) Validar qualidade:
+- `npm run build`
+- `npm run lint` (ou equivalente do projeto)
+
+2) Confirmar aderência de contrato:
+- `POST /v1/payments` mantém 201/200 (replay)
+- `GET /v1/payments/:paymentId` funcional
+- `GET /v1/payments/by-idempotency-key/:idempotencyKey` funcional e sem conflito de roteamento
+
+3) Entregar saída no formato:
+
+# 1. Mudanças aplicadas
+# 2. Arquivos alterados
+# 3. Evidência de aderência ao contrato
+# 4. Resultado de build/lint
+# 5. Riscos remanescentes (se houver)

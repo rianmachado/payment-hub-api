@@ -1,8 +1,4 @@
-import {
-  Currency,
-  PaymentMethodType,
-  PaymentStatus,
-} from '../dto/payment-contract.enums';
+import { Currency, PaymentMethodType, PaymentStatus } from '../dto/payment-contract.enums';
 
 export type InternalPaymentStatus =
   | 'INITIATED'
@@ -48,9 +44,7 @@ export interface CreatePaymentRecordInput {
   correlationId: string;
 }
 
-export function mapInternalStatusToApiStatus(
-  status: InternalPaymentStatus,
-): PaymentStatus {
+export function mapInternalStatusToApiStatus(status: InternalPaymentStatus): PaymentStatus {
   switch (status) {
     case 'INITIATED':
       return PaymentStatus.CREATED;

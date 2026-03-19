@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IdempotencyRecordSnapshot } from '../contracts/idempotency.types';
-import {
-  IdempotencyStore,
-  SaveIdempotencyRecordInput,
-} from './idempotency-store.interface';
+import { IdempotencyStore, SaveIdempotencyRecordInput } from './idempotency-store.interface';
 
 @Injectable()
 export class InMemoryIdempotencyStore implements IdempotencyStore {

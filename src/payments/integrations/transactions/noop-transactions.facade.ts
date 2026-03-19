@@ -17,4 +17,3 @@ export class NoopTransactionsFacade implements TransactionsFacade {
     return { transactionId: randomUUID() };
   }
 }
-

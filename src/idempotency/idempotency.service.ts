@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable } from '@nestjs/common';
 import {
   CREATE_PAYMENT_IDEMPOTENCY_SCOPE,
   IDEMPOTENCY_ERROR_CODE_CONFLICT,
@@ -11,14 +6,8 @@ import {
   IDEMPOTENCY_ERROR_CODE_VALIDATION,
   IDEMPOTENCY_KEY_MAX_LENGTH,
 } from './idempotency.constants';
-import {
-  EvaluateIdempotencyInput,
-  IdempotencyDecision,
-} from './contracts/idempotency.types';
-import {
-  IDEMPOTENCY_STORE,
-  IdempotencyStore,
-} from './storage/idempotency-store.interface';
+import { EvaluateIdempotencyInput, IdempotencyDecision } from './contracts/idempotency.types';
+import { IDEMPOTENCY_STORE, IdempotencyStore } from './storage/idempotency-store.interface';
 
 @Injectable()
 export class IdempotencyService {
@@ -93,9 +82,7 @@ export class IdempotencyService {
     });
   }
 
-  private async evaluate(
-    input: EvaluateIdempotencyInput,
-  ): Promise<IdempotencyDecision> {
+  private async evaluate(input: EvaluateIdempotencyInput): Promise<IdempotencyDecision> {
     const normalizedKey = this.validateIdempotencyKey(input.idempotencyKey);
     const record = await this.store.findByScopedKey({
       clientScope: input.clientScope,

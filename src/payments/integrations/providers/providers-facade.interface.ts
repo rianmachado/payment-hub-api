@@ -14,8 +14,5 @@ export interface ProcessPaymentIntentResult {
 }
 
 export interface ProvidersFacade {
-  processPaymentIntent(
-    input: ProcessPaymentIntentInput,
-  ): Promise<ProcessPaymentIntentResult>;
+  processPaymentIntent(input: ProcessPaymentIntentInput): Promise<ProcessPaymentIntentResult>;
 }
-

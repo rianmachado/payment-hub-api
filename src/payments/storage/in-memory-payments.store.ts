@@ -74,8 +74,7 @@ export class InMemoryPaymentsStore implements PaymentsStore {
     const next: PaymentAggregate = {
       ...current,
       status: input.status,
-      completedAt:
-        input.completedAt === undefined ? current.completedAt : input.completedAt,
+      completedAt: input.completedAt === undefined ? current.completedAt : input.completedAt,
       updatedAt: new Date(),
     };
 

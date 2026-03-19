@@ -1,0 +1,184 @@
+{
+  "info": {
+    "_postman_id": "f3cf2357-cc26-40c4-a5db-a4f64a47ff66",
+    "name": "Payment Hub API",
+    "description": "Collection baseada nas rotas atualmente disponiveis no projeto.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Healthcheck da API."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "POST /v1/payments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payer\": { \"externalId\": \"cust-001\" },\n  \"payee\": { \"externalId\": \"merchant-002\" },\n  \"amount\": 150.5,\n  \"currency\": \"BRL\",\n  \"paymentMethod\": { \"type\": \"PIX\", \"pixKey\": \"merchant@example.com\" },\n  \"externalReference\": \"invoice-2024-001\",\n  \"metadata\": { \"channel\": \"web\" }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "payments"
+              ]
+            },
+            "description": "Cria pagamento. Retorna 201 (criacao) ou 200 (replay idempotente)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /v1/payments/:paymentId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/payments/{{paymentId}}?expand={{expand}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "payments",
+                "{{paymentId}}"
+              ],
+              "query": [
+                {
+                  "key": "expand",
+                  "value": "{{expand}}",
+                  "description": "Opcional. Ex.: events,history"
+                }
+              ]
+            },
+            "description": "Consulta pagamento por paymentId."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /v1/payments/by-idempotency-key/:idempotencyKey",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/payments/by-idempotency-key/{{idempotencyKey}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "payments",
+                "by-idempotency-key",
+                "{{idempotencyKey}}"
+              ]
+            },
+            "description": "Consulta pagamento pela chave de idempotencia."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "Bearer seu-token-aqui",
+      "type": "string"
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "ord-12345-inv-67890",
+      "type": "string"
+    },
+    {
+      "key": "correlationId",
+      "value": "550e8400-e29b-41d4-a716-446655440000",
+      "type": "string"
+    },
+    {
+      "key": "paymentId",
+      "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "type": "string"
+    },
+    {
+      "key": "expand",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
