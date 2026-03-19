@@ -1,0 +1,93 @@
+----------------------------------------
+AGENTE — DEV IMPLEMENTATION (DTO FIXES)
+COMMIT ALVO — feat(dto)
+----------------------------------------
+
+Você é um Senior Engineer em Node.js/NestJS/TypeScript.
+
+Contexto:
+- O commit `feat(dto): implement api contracts and validation layer` foi revisado.
+- A revisão resultou em **APROVADO COM AJUSTES**.
+- Sua tarefa é aplicar **somente** os ajustes abaixo, mantendo foco estrito em DTO/validação (sem antecipar service/controller/idempotency real).
+
+Arquivos-alvo principais:
+- `src/payments/dto/common/party.dto.ts`
+- `src/payments/dto/common/payment-method.dto.ts`
+- `src/payments/dto/responses/payment.response.dto.ts`
+- (apenas se necessário) arquivos DTO correlatos
+
+Fonte de verdade:
+- `docs/api/openapi.md`
+- `docs/requirements.md`
+- `docs/quality.md`
+- `docs/dev-commit-logs/implementation-commit-plan.md` (etapa feat(dto))
+
+Objetivo:
+Implementar os ajustes obrigatórios e os recomendados sem quebrar o escopo do commit `feat(dto)`.
+
+----------------------------------------
+AJUSTES OBRIGATÓRIOS (BLOQUEANTES)
+----------------------------------------
+
+1) Remover drift de contrato em Party DTO
+- Em `PartyDto`, remover o campo `type?: string`.
+- Motivo: `type` não está documentado no contrato OpenAPI para `payer/payee`.
+
+2) Endurecer contrato de response para campos esperados no sucesso
+- Em `PaymentResponseDto`, tornar obrigatórios (não opcionais):
+  - `amount`
+  - `currency`
+  - `payer`
+  - `payee`
+  - `paymentMethod`
+- Manter opcionais/nullables apenas os campos que a documentação permite como tais (ex.: `externalReference`, `completedAt`).
+
+3) Completar validação condicional de paymentMethod por tipo
+- Em `CreatePaymentMethodDto`, garantir:
+  - se `type === CARD`, `cardToken` é obrigatório e não vazio;
+  - se `type === BOLETO`, `boletoNumber` é obrigatório e não vazio;
+  - se `type === PIX`, `pixKey` é obrigatório e não vazio (já existe, validar se está consistente).
+- Não introduzir lógica de negócio; apenas validação declarativa de DTO.
+
+----------------------------------------
+AJUSTES RECOMENDADOS (NÃO BLOQUEANTES)
+----------------------------------------
+
+4) Melhorar validação de metadata
+- Em `CreatePaymentRequestDto`, manter `metadata` como opcional, mas validar melhor o shape de mapa chave/valor string.
+- Evitar complexidade excessiva; manter solução idiomática de DTO.
+
+5) Revisar política de callbackUrl
+- Confirmar se `@IsUrl({ require_tld: false })` é a escolha desejada.
+- Se houver mudança, manter aderência ao contrato e justificar no resumo técnico.
+
+----------------------------------------
+REGRAS
+----------------------------------------
+
+- Não implementar services, controllers, guards, interceptors, filters ou idempotência real.
+- Não alterar documentação.
+- Não extrapolar para commits futuros.
+- Preservar estilo NestJS idiomático com `class-validator` e `class-transformer`.
+- Se necessário, ajustar imports e decorators para manter lint limpo.
+
+----------------------------------------
+VALIDAÇÃO FINAL OBRIGATÓRIA
+----------------------------------------
+
+1) Rodar checagens de qualidade:
+- `npm run build`
+- `npm run lint` (ou equivalente do projeto)
+
+2) Confirmar que os DTOs permanecem alinhados ao OpenAPI para:
+- POST `/v1/payments` request/response
+- GET `/v1/payments/{paymentId}` response
+- GET `/v1/payments/by-idempotency-key/{idempotencyKey}` params
+
+3) Entregar saída no formato:
+
+# 1. Mudanças aplicadas
+# 2. Arquivos alterados
+# 3. Evidência de aderência ao contrato
+# 4. Resultado de build/lint
+# 5. Riscos remanescentes (se houver)

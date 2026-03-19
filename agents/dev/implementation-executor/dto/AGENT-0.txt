@@ -1,0 +1,94 @@
+----------------------------------------
+AGENTE — CONTROLLED COMMIT EXECUTOR
+COMMIT ESPECÍFICO — feat(dto)
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Implemente somente o commit:
+
+feat(dto): implement api contracts and validation layer
+
+Contexto:
+- o setup do projeto já está concluído
+- o implementation-commit-plan já foi validado
+- a etapa feat(modules) já foi concluída com sucesso
+- os boundaries da aplicação já existem
+- esta etapa deve seguir rigorosamente a documentação do projeto
+
+Documentação fonte da verdade:
+
+docs/
+- requirements.md
+- data-state.md
+- api/openapi.md
+- quality.md
+- roadmap.md
+- c4/components.md
+- dev-commit-logs/implementation-commit-plan.md
+
+Objetivo:
+Criar somente a camada de contratos e validação da API, sem antecipar lógica de negócio.
+
+Escopo esperado:
+- DTOs de request e response necessários para os fluxos documentados
+- validações com class-validator
+- organização dos DTOs por contexto
+- tipos/coerência com OpenAPI
+- preparação da camada de borda para uso futuro por controllers e services
+
+Entram neste commit:
+- DTOs mínimos para:
+  - POST /v1/payments
+  - GET /v1/payments/{paymentId}
+  - GET /v1/payments/by-idempotency-key/{idempotencyKey}
+- validações de entrada
+- enums ou tipos auxiliares, se estritamente necessários para os contratos
+- organização de pastas/arquivos da camada DTO
+- wiring mínimo de ValidationPipe apenas se isso for explicitamente necessário para sustentar a camada de validação e sem extrapolar o escopo
+
+Não pode fazer:
+- implementar regra de negócio
+- implementar idempotência real
+- implementar service orchestration
+- implementar controller completo
+- implementar persistence/entities/repositories
+- implementar guards/interceptors/filters
+- alterar arquitetura dos módulos
+- criar endpoints além dos documentados
+- inventar campos fora do OpenAPI e requirements
+
+Se houver dependência de commits futuros:
+- criar somente contratos mínimos
+- deixar TODO explícito quando necessário
+- não antecipar comportamento
+
+Formato da resposta:
+
+# 1. Escopo exato do commit
+- objetivo
+- o que entra
+- o que não entra
+
+# 2. Arquivos que serão criados ou alterados
+
+# 3. Implementação mínima
+Mostrar somente o código necessário para este commit.
+
+# 4. Limites aplicados
+Explicar o que ficou propositalmente fora.
+
+# 5. Validação arquitetural
+Explicar como o commit respeita:
+- OpenAPI
+- requirements
+- quality
+- implementation plan
+
+# 6. Próximo commit sugerido
+Apenas sugerir.
+Não implementar.
+
+Critério principal:
+A camada DTO deve ficar pronta, clara e aderente à documentação, sem antecipar lógica de negócio.
+----------------------------------------
