@@ -1,0 +1,89 @@
+----------------------------------------
+AGENTE — CONTROLLED COMMIT EXECUTOR
+COMMIT ESPECÍFICO — feat(interceptors)
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Implemente somente o commit:
+
+feat(interceptors): add correlation id logging and response interceptors
+
+Contexto:
+- o setup do projeto já está concluído
+- o implementation-commit-plan já foi validado
+- feat(modules), feat(dto), feat(idempotency), feat(payment-service), feat(controller) e feat(exception-filters) já foram concluídos com sucesso
+- esta etapa deve seguir rigorosamente a documentação do projeto
+
+Documentação fonte da verdade:
+
+docs/
+- requirements.md
+- data-state.md
+- api/openapi.md
+- quality.md
+- roadmap.md
+- c4/components.md
+- dev-commit-logs/implementation-commit-plan.md
+
+Objetivo:
+Implementar somente a camada de interceptors para correlation id, logging básico e interceptação transversal leve, alinhada à documentação, sem antecipar guards ou autenticação.
+
+Escopo esperado:
+- interceptor(s) necessário(s) para correlation id e logging básico
+- propagação/criação de X-Correlation-Id conforme a documentação
+- interceptação leve de request/response, se prevista
+- integração mínima com a aplicação para ativação do(s) interceptor(s)
+
+Entram neste commit:
+- interceptor para correlation id, ou composição equivalente
+- interceptor para logging básico, se fizer parte da mesma estratégia e do plano
+- uso consistente de X-Correlation-Id
+- adição de header de resposta, se aplicável
+- wiring mínimo necessário no bootstrap/app module, se aplicável
+- cuidado para não vazar dados sensíveis no logging
+
+Não pode fazer:
+- implementar guards
+- implementar autenticação/autorização
+- duplicar papel do exception filter
+- alterar OpenAPI arbitrariamente
+- criar framework de observabilidade complexo demais
+- mover lógica de negócio para interceptor
+- alterar contratos de response fora do que estiver documentado
+- acoplar interceptor fortemente a services específicos sem necessidade
+
+Se houver dependência de commits futuros:
+- manter o interceptor pequeno
+- usar abordagem mínima e segura
+- não antecipar segurança
+
+Formato da resposta:
+
+# 1. Escopo exato do commit
+- objetivo
+- o que entra
+- o que não entra
+
+# 2. Arquivos que serão criados ou alterados
+
+# 3. Implementação mínima
+Mostrar somente o código necessário para este commit.
+
+# 4. Limites aplicados
+Explicar claramente o que ficou fora propositalmente.
+
+# 5. Validação arquitetural
+Explicar como o commit respeita:
+- quality
+- requirements
+- openapi
+- implementation plan
+
+# 6. Próximo commit sugerido
+Apenas sugerir.
+Não implementar.
+
+Critério principal:
+Os interceptors devem adicionar correlation id e logging básico de forma limpa, sem assumir responsabilidades de filter ou guard.
+----------------------------------------

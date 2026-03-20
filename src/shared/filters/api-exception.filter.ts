@@ -21,12 +21,13 @@ type StandardErrorBody = {
   message: string;
   details?: Record<string, unknown>;
 };
+type RequestWithCorrelationId = Request & { correlationId?: string };
 
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const context = host.switchToHttp();
-    const request = context.getRequest<Request>();
+    const request = context.getRequest<RequestWithCorrelationId>();
     const response = context.getResponse<Response>();
 
     const correlationId = this.resolveCorrelationId(request);
@@ -37,7 +38,12 @@ export class ApiExceptionFilter implements ExceptionFilter {
     response.status(status).json(payload);
   }
 
-  private resolveCorrelationId(request: Request): string {
+  private resolveCorrelationId(request: RequestWithCorrelationId): string {
+    const correlationIdFromContext = request.correlationId?.trim();
+    if (correlationIdFromContext) {
+      return correlationIdFromContext;
+    }
+
     const headerValue = request.headers['x-correlation-id'];
     const rawValue = Array.isArray(headerValue) ? headerValue[0] : headerValue;
     const normalizedValue = rawValue?.trim();
@@ -184,16 +190,14 @@ export class ApiExceptionFilter implements ExceptionFilter {
     return 'Ocorreu um erro interno no servidor.';
   }
 
-  private hasStandardErrorBody(
-    responseBody: unknown,
-  ): responseBody is StandardErrorBody {
+  private hasStandardErrorBody(responseBody: unknown): responseBody is StandardErrorBody {
     return Boolean(
       responseBody &&
-        typeof responseBody === 'object' &&
-        'code' in responseBody &&
-        typeof (responseBody as { code?: unknown }).code === 'string' &&
-        'message' in responseBody &&
-        typeof (responseBody as { message?: unknown }).message === 'string',
+      typeof responseBody === 'object' &&
+      'code' in responseBody &&
+      typeof (responseBody as { code?: unknown }).code === 'string' &&
+      'message' in responseBody &&
+      typeof (responseBody as { message?: unknown }).message === 'string',
     );
   }
 
@@ -202,9 +206,9 @@ export class ApiExceptionFilter implements ExceptionFilter {
   ): responseBody is { message: string[]; error: string; statusCode: number } {
     return Boolean(
       responseBody &&
-        typeof responseBody === 'object' &&
-        'message' in responseBody &&
-        Array.isArray((responseBody as { message?: unknown }).message),
+      typeof responseBody === 'object' &&
+      'message' in responseBody &&
+      Array.isArray((responseBody as { message?: unknown }).message),
     );
   }
 

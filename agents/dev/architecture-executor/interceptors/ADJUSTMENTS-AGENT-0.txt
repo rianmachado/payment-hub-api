@@ -1,0 +1,64 @@
+----------------------------------------
+AGENTE — IMPLEMENTATION ADJUSTMENTS EXECUTOR
+AJUSTES PÓS-REVIEW — feat(interceptors)
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Aplique somente os ajustes abaixo, referentes ao commit:
+
+feat(interceptors): add correlation id logging and response interceptors
+
+Contexto:
+- a camada de interceptors já foi implementada
+- houve revisão arquitetural e o status foi “APROVADO COM AJUSTES”
+- esta tarefa é estritamente para ajustes pontuais pós-review, sem ampliar escopo
+
+Documentação fonte da verdade:
+docs/
+- requirements.md
+- data-state.md
+- api/openapi.md
+- quality.md
+- roadmap.md
+- c4/components.md
+- dev-commit-logs/implementation-commit-plan.md
+
+Objetivo:
+Aplicar os ajustes obrigatórios e os recomendados (não bloqueantes) de forma mínima, segura e alinhada à arquitetura atual.
+
+Ajustes obrigatórios antes do commit/merge:
+1) Logging de erro deve registrar o status HTTP final real da resposta
+- corrigir o HttpLoggingInterceptor para evitar status intermediário/incorreto no caminho de erro
+- garantir que o log reflita o status final efetivamente enviado ao cliente (4xx/5xx quando aplicável)
+
+Ajustes recomendados mas não bloqueantes:
+2) Enriquecer minimamente o payload de log com metadados transversais
+- incluir campos como service/environment (e version se já existir fonte simples), sem criar framework complexo
+
+3) Remover fallback redundante de correlation id no controller
+- evitar gerar correlation id no controller quando o interceptor global já é a fonte única
+- manter consistência de responsabilidade transversal no interceptor
+
+Restrições:
+- não implementar guards/autenticação/autorização
+- não alterar contratos de response do OpenAPI
+- não mover lógica de negócio para interceptor
+- não refatorar componentes fora do necessário para os ajustes acima
+- não introduzir observabilidade complexa ou dependências desnecessárias
+
+Critérios de aceitação:
+- logs de erro mostram status final correto da resposta
+- logs continuam sem dados sensíveis
+- X-Correlation-Id segue consistente via interceptor
+- build/lint passam sem erros
+
+Formato da resposta:
+# 1. Escopo exato aplicado
+# 2. Arquivos alterados
+# 3. Implementação mínima realizada
+# 4. Validação executada (lint/build)
+# 5. Limites mantidos (o que ficou fora)
+# 6. Resultado final para merge
+
+----------------------------------------

@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { ApiExceptionFilter } from './shared/filters/api-exception.filter';
+import { CorrelationIdInterceptor } from './shared/interceptors/correlation-id.interceptor';
+import { HttpLoggingInterceptor } from './shared/interceptors/http-logging.interceptor';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -19,6 +21,7 @@ async function bootstrap(): Promise<void> {
     }),
   );
   app.useGlobalFilters(new ApiExceptionFilter());
+  app.useGlobalInterceptors(new CorrelationIdInterceptor(), new HttpLoggingInterceptor());
 
   await app.listen(port);
 }
