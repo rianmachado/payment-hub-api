@@ -10,22 +10,29 @@ import {
   Query,
   Req,
   Res,
-  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { AuthContext } from '../auth/auth-context.types';
+import { AuthorizationGuard } from '../auth/guards/authorization.guard';
 import { GetPaymentByIdParamsDto } from './dto/params/get-payment-by-id.params.dto';
 import { GetPaymentByIdempotencyKeyParamsDto } from './dto/params/get-payment-by-idempotency-key.params.dto';
 import { CreatePaymentRequestDto } from './dto/requests/create-payment.request.dto';
 import { CreatePaymentResponseDto, PaymentResponseDto } from './dto/responses/payment.response.dto';
 import { PaymentsService } from './payments.service';
 
-const AUTH_TOKEN_MISSING_CODE = 'AUTH_TOKEN_MISSING';
 type HttpResponse = {
   status(code: number): void;
 };
-type RequestWithCorrelationId = Request & { correlationId: string };
+type RequestWithCorrelationId = Request & {
+  correlationId: string;
+};
+type RequestWithCorrelationIdAndAuth = RequestWithCorrelationId & {
+  authContext: AuthContext;
+};
 
 @Controller('v1/payments')
+@UseGuards(AuthorizationGuard)
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
@@ -33,12 +40,11 @@ export class PaymentsController {
   @HttpCode(HttpStatus.CREATED)
   async createPayment(
     @Body() body: CreatePaymentRequestDto,
-    @Headers('authorization') authorization: string | undefined,
     @Headers('idempotency-key') idempotencyKey: string | undefined,
-    @Req() request: RequestWithCorrelationId,
+    @Req() request: RequestWithCorrelationIdAndAuth,
     @Res({ passthrough: true }) response: HttpResponse,
   ): Promise<CreatePaymentResponseDto> {
-    const clientScope = this.resolveClientScope(authorization);
+    const clientScope = request.authContext.clientScope;
     const correlationId = request.correlationId;
 
     const payment = await this.paymentsService.createPayment({
@@ -58,9 +64,9 @@ export class PaymentsController {
   @Get('by-idempotency-key/:idempotencyKey')
   async getPaymentByIdempotencyKey(
     @Param() params: GetPaymentByIdempotencyKeyParamsDto,
-    @Headers('authorization') authorization: string | undefined,
+    @Req() request: RequestWithCorrelationIdAndAuth,
   ): Promise<PaymentResponseDto> {
-    const clientScope = this.resolveClientScope(authorization);
+    const clientScope = request.authContext.clientScope;
 
     return this.paymentsService.getPaymentByIdempotencyKey({
       clientScope,
@@ -71,27 +77,14 @@ export class PaymentsController {
   @Get(':paymentId')
   async getPaymentById(
     @Param() params: GetPaymentByIdParamsDto,
-    @Headers('authorization') authorization: string | undefined,
+    @Req() request: RequestWithCorrelationIdAndAuth,
     @Query('expand') _expand: string | undefined,
   ): Promise<PaymentResponseDto> {
-    const clientScope = this.resolveClientScope(authorization);
+    const clientScope = request.authContext.clientScope;
 
     return this.paymentsService.getPaymentById({
       clientScope,
       paymentId: params.paymentId,
     });
-  }
-
-  private resolveClientScope(authorization: string | undefined): string {
-    const normalizedAuthorization = authorization?.trim();
-
-    if (!normalizedAuthorization) {
-      throw new UnauthorizedException({
-        code: AUTH_TOKEN_MISSING_CODE,
-        message: 'Header Authorization ausente.',
-      });
-    }
-
-    return normalizedAuthorization;
   }
 }
