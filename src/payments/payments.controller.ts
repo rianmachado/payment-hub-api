@@ -8,10 +8,11 @@ import {
   Param,
   Post,
   Query,
+  Req,
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { Request } from 'express';
 import { GetPaymentByIdParamsDto } from './dto/params/get-payment-by-id.params.dto';
 import { GetPaymentByIdempotencyKeyParamsDto } from './dto/params/get-payment-by-idempotency-key.params.dto';
 import { CreatePaymentRequestDto } from './dto/requests/create-payment.request.dto';
@@ -20,9 +21,9 @@ import { PaymentsService } from './payments.service';
 
 const AUTH_TOKEN_MISSING_CODE = 'AUTH_TOKEN_MISSING';
 type HttpResponse = {
-  setHeader(name: string, value: string): void;
   status(code: number): void;
 };
+type RequestWithCorrelationId = Request & { correlationId: string };
 
 @Controller('v1/payments')
 export class PaymentsController {
@@ -34,12 +35,11 @@ export class PaymentsController {
     @Body() body: CreatePaymentRequestDto,
     @Headers('authorization') authorization: string | undefined,
     @Headers('idempotency-key') idempotencyKey: string | undefined,
-    @Headers('x-correlation-id') correlationIdHeader: string | undefined,
+    @Req() request: RequestWithCorrelationId,
     @Res({ passthrough: true }) response: HttpResponse,
   ): Promise<CreatePaymentResponseDto> {
     const clientScope = this.resolveClientScope(authorization);
-    const correlationId = this.resolveCorrelationId(correlationIdHeader);
-    response.setHeader('X-Correlation-Id', correlationId);
+    const correlationId = request.correlationId;
 
     const payment = await this.paymentsService.createPayment({
       clientScope,
@@ -59,12 +59,8 @@ export class PaymentsController {
   async getPaymentByIdempotencyKey(
     @Param() params: GetPaymentByIdempotencyKeyParamsDto,
     @Headers('authorization') authorization: string | undefined,
-    @Headers('x-correlation-id') correlationIdHeader: string | undefined,
-    @Res({ passthrough: true }) response: HttpResponse,
   ): Promise<PaymentResponseDto> {
     const clientScope = this.resolveClientScope(authorization);
-    const correlationId = this.resolveCorrelationId(correlationIdHeader);
-    response.setHeader('X-Correlation-Id', correlationId);
 
     return this.paymentsService.getPaymentByIdempotencyKey({
       clientScope,
@@ -76,13 +72,9 @@ export class PaymentsController {
   async getPaymentById(
     @Param() params: GetPaymentByIdParamsDto,
     @Headers('authorization') authorization: string | undefined,
-    @Headers('x-correlation-id') correlationIdHeader: string | undefined,
-    @Res({ passthrough: true }) response: HttpResponse,
     @Query('expand') _expand: string | undefined,
   ): Promise<PaymentResponseDto> {
     const clientScope = this.resolveClientScope(authorization);
-    const correlationId = this.resolveCorrelationId(correlationIdHeader);
-    response.setHeader('X-Correlation-Id', correlationId);
 
     return this.paymentsService.getPaymentById({
       clientScope,
@@ -101,9 +93,5 @@ export class PaymentsController {
     }
 
     return normalizedAuthorization;
-  }
-
-  private resolveCorrelationId(correlationIdHeader: string | undefined): string {
-    return correlationIdHeader?.trim() || randomUUID();
   }
 }
