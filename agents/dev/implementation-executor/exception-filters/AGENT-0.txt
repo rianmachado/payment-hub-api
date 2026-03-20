@@ -1,0 +1,89 @@
+----------------------------------------
+AGENTE — CONTROLLED COMMIT EXECUTOR
+COMMIT ESPECÍFICO — feat(exception-filters)
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Implemente somente o commit:
+
+feat(exception-filters): standardize error handling layer
+
+Contexto:
+- o setup do projeto já está concluído
+- o implementation-commit-plan já foi validado
+- feat(modules), feat(dto), feat(idempotency), feat(payment-service) e feat(controller) já foram concluídos com sucesso
+- esta etapa deve seguir rigorosamente a documentação do projeto
+
+Documentação fonte da verdade:
+
+docs/
+- requirements.md
+- data-state.md
+- api/openapi.md
+- quality.md
+- roadmap.md
+- c4/components.md
+- dev-commit-logs/implementation-commit-plan.md
+
+Objetivo:
+Implementar somente a camada padronizada de tratamento de exceções da aplicação, alinhada ao modelo de erro documentado, sem antecipar interceptors, guards ou observabilidade transversal completa.
+
+Escopo esperado:
+- criação/ajuste de exception filters
+- padronização do payload de erro HTTP
+- alinhamento com o modelo de erro documentado
+- tratamento consistente para exceções relevantes da aplicação
+- wiring mínimo necessário para aplicar a estratégia de tratamento de erro
+
+Entram neste commit:
+- exception filter global ou composição mínima equivalente, conforme o plano
+- modelo padronizado de resposta de erro contendo campos documentados
+- transformação consistente de exceções para respostas HTTP
+- tratamento de exceções compatível com os fluxos atuais
+- integração mínima necessária com o app/module bootstrap, se aplicável
+
+Não pode fazer:
+- implementar interceptors
+- implementar guards
+- transformar o filter em mecanismo de logging completo
+- adicionar observabilidade transversal indevida
+- alterar OpenAPI arbitrariamente
+- mover lógica de negócio para dentro do filter
+- criar comportamentos que pertençam a etapas futuras
+- acoplar o filter a detalhes internos indevidos
+
+Se houver dependência de commits futuros:
+- manter o tratamento de erro focado
+- não antecipar interceptors
+- não antecipar política de segurança
+
+Formato da resposta:
+
+# 1. Escopo exato do commit
+- objetivo
+- o que entra
+- o que não entra
+
+# 2. Arquivos que serão criados ou alterados
+
+# 3. Implementação mínima
+Mostrar somente o código necessário para este commit.
+
+# 4. Limites aplicados
+Explicar claramente o que ficou fora propositalmente.
+
+# 5. Validação arquitetural
+Explicar como o commit respeita:
+- quality
+- openapi
+- requirements
+- implementation plan
+
+# 6. Próximo commit sugerido
+Apenas sugerir.
+Não implementar.
+
+Critério principal:
+A camada de tratamento de erro deve ficar padronizada, pequena e alinhada à documentação, sem assumir responsabilidade de interceptor ou guard.
+----------------------------------------
