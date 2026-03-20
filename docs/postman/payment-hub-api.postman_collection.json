@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "f3cf2357-cc26-40c4-a5db-a4f64a47ff66",
     "name": "Payment Hub API",
-    "description": "Collection baseada nas rotas atualmente disponiveis no projeto.",
+    "description": "Collection alinhada aos endpoints v1 e aos guards de autorizacao (Authorization Bearer obrigatorio nos endpoints de payments).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -33,118 +33,411 @@
       "name": "Payments",
       "item": [
         {
-          "name": "POST /v1/payments",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "{{token}}",
-                "type": "text"
+          "name": "Success",
+          "item": [
+            {
+              "name": "01 - POST /v1/payments",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "{{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{idempotencyKey}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Correlation-Id",
+                    "value": "{{correlationId}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"payer\": { \"externalId\": \"cust-001\" },\n  \"payee\": { \"externalId\": \"merchant-002\" },\n  \"amount\": 150.5,\n  \"currency\": \"BRL\",\n  \"paymentMethod\": { \"type\": \"PIX\", \"pixKey\": \"merchant@example.com\" },\n  \"externalReference\": \"invoice-2024-001\",\n  \"metadata\": { \"channel\": \"web\" }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/v1/payments",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "payments"
+                  ]
+                },
+                "description": "Cria pagamento. Retorna 201 (criacao) ou 200 (replay idempotente)."
               },
-              {
-                "key": "Idempotency-Key",
-                "value": "{{idempotencyKey}}",
-                "type": "text"
-              },
-              {
-                "key": "X-Correlation-Id",
-                "value": "{{correlationId}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"payer\": { \"externalId\": \"cust-001\" },\n  \"payee\": { \"externalId\": \"merchant-002\" },\n  \"amount\": 150.5,\n  \"currency\": \"BRL\",\n  \"paymentMethod\": { \"type\": \"PIX\", \"pixKey\": \"merchant@example.com\" },\n  \"externalReference\": \"invoice-2024-001\",\n  \"metadata\": { \"channel\": \"web\" }\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/v1/payments",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "v1",
-                "payments"
-              ]
-            },
-            "description": "Cria pagamento. Retorna 201 (criacao) ou 200 (replay idempotente)."
-          },
-          "response": []
-        },
-        {
-          "name": "GET /v1/payments/:paymentId",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "{{token}}",
-                "type": "text"
-              },
-              {
-                "key": "X-Correlation-Id",
-                "value": "{{correlationId}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/v1/payments/{{paymentId}}?expand={{expand}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "v1",
-                "payments",
-                "{{paymentId}}"
-              ],
-              "query": [
+              "event": [
                 {
-                  "key": "expand",
-                  "value": "{{expand}}",
-                  "description": "Opcional. Ex.: events,history"
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status deve ser 200 ou 201', function () {",
+                      "  pm.expect([200, 201]).to.include(pm.response.code);",
+                      "});",
+                      "",
+                      "pm.test('deve retornar X-Correlation-Id', function () {",
+                      "  pm.expect(pm.response.headers.has('X-Correlation-Id')).to.be.true;",
+                      "});"
+                    ]
+                  }
                 }
-              ]
+              ],
+              "response": []
             },
-            "description": "Consulta pagamento por paymentId."
-          },
-          "response": []
+            {
+              "name": "02 - GET /v1/payments/:paymentId",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "{{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Correlation-Id",
+                    "value": "{{correlationId}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1/payments/{{paymentId}}?expand={{expand}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "payments",
+                    "{{paymentId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "expand",
+                      "value": "{{expand}}",
+                      "description": "Opcional. Ex.: events,history"
+                    }
+                  ]
+                },
+                "description": "Consulta pagamento por paymentId."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status deve ser 200', function () {",
+                      "  pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('deve retornar X-Correlation-Id', function () {",
+                      "  pm.expect(pm.response.headers.has('X-Correlation-Id')).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "03 - GET /v1/payments/by-idempotency-key/:idempotencyKey",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "{{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Correlation-Id",
+                    "value": "{{correlationId}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1/payments/by-idempotency-key/{{idempotencyKey}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "payments",
+                    "by-idempotency-key",
+                    "{{idempotencyKey}}"
+                  ]
+                },
+                "description": "Consulta pagamento pela chave de idempotencia."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status deve ser 200', function () {",
+                      "  pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('deve retornar X-Correlation-Id', function () {",
+                      "  pm.expect(pm.response.headers.has('X-Correlation-Id')).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
         },
         {
-          "name": "GET /v1/payments/by-idempotency-key/:idempotencyKey",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "{{token}}",
-                "type": "text"
+          "name": "Security",
+          "item": [
+            {
+              "name": "01 - POST /v1/payments (401 sem Authorization)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{idempotencyKey}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Correlation-Id",
+                    "value": "{{correlationId}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"payer\": { \"externalId\": \"cust-001\" },\n  \"payee\": { \"externalId\": \"merchant-002\" },\n  \"amount\": 150.5,\n  \"currency\": \"BRL\",\n  \"paymentMethod\": { \"type\": \"PIX\", \"pixKey\": \"merchant@example.com\" },\n  \"externalReference\": \"invoice-2024-001\",\n  \"metadata\": { \"channel\": \"web\" }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/v1/payments",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "payments"
+                  ]
+                },
+                "description": "Cenario de seguranca: deve retornar 401 com code AUTH_TOKEN_MISSING quando o header Authorization nao for enviado."
               },
-              {
-                "key": "X-Correlation-Id",
-                "value": "{{correlationId}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/v1/payments/by-idempotency-key/{{idempotencyKey}}",
-              "host": [
-                "{{baseUrl}}"
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status deve ser 401', function () {",
+                      "  pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test('code deve ser AUTH_TOKEN_MISSING', function () {",
+                      "  var json = pm.response.json();",
+                      "  pm.expect(json.code).to.eql('AUTH_TOKEN_MISSING');",
+                      "});",
+                      "",
+                      "pm.test('deve retornar correlationId no body', function () {",
+                      "  var json = pm.response.json();",
+                      "  pm.expect(json.correlationId).to.be.a('string').and.not.empty;",
+                      "});"
+                    ]
+                  }
+                }
               ],
-              "path": [
-                "v1",
-                "payments",
-                "by-idempotency-key",
-                "{{idempotencyKey}}"
-              ]
+              "response": []
             },
-            "description": "Consulta pagamento pela chave de idempotencia."
-          },
-          "response": []
+            {
+              "name": "02 - POST /v1/payments (401 Authorization invalido)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "{{invalidToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{idempotencyKey}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Correlation-Id",
+                    "value": "{{correlationId}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"payer\": { \"externalId\": \"cust-001\" },\n  \"payee\": { \"externalId\": \"merchant-002\" },\n  \"amount\": 150.5,\n  \"currency\": \"BRL\",\n  \"paymentMethod\": { \"type\": \"PIX\", \"pixKey\": \"merchant@example.com\" },\n  \"externalReference\": \"invoice-2024-001\",\n  \"metadata\": { \"channel\": \"web\" }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/v1/payments",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "payments"
+                  ]
+                },
+                "description": "Cenario de seguranca: deve retornar 401 com code AUTH_TOKEN_INVALID quando Authorization nao estiver no formato Bearer <token>."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status deve ser 401', function () {",
+                      "  pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test('code deve ser AUTH_TOKEN_INVALID', function () {",
+                      "  var json = pm.response.json();",
+                      "  pm.expect(json.code).to.eql('AUTH_TOKEN_INVALID');",
+                      "});",
+                      "",
+                      "pm.test('deve retornar correlationId no body', function () {",
+                      "  var json = pm.response.json();",
+                      "  pm.expect(json.correlationId).to.be.a('string').and.not.empty;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "03 - GET /v1/payments/:paymentId (401 sem Authorization)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Correlation-Id",
+                    "value": "{{correlationId}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1/payments/{{paymentId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "payments",
+                    "{{paymentId}}"
+                  ]
+                },
+                "description": "Cenario de seguranca: deve retornar 401 com code AUTH_TOKEN_MISSING quando o header Authorization nao for enviado."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status deve ser 401', function () {",
+                      "  pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test('code deve ser AUTH_TOKEN_MISSING', function () {",
+                      "  var json = pm.response.json();",
+                      "  pm.expect(json.code).to.eql('AUTH_TOKEN_MISSING');",
+                      "});",
+                      "",
+                      "pm.test('deve retornar correlationId no body', function () {",
+                      "  var json = pm.response.json();",
+                      "  pm.expect(json.correlationId).to.be.a('string').and.not.empty;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "04 - GET /v1/payments/:paymentId (401 Authorization invalido)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "{{invalidToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Correlation-Id",
+                    "value": "{{correlationId}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1/payments/{{paymentId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "payments",
+                    "{{paymentId}}"
+                  ]
+                },
+                "description": "Cenario de seguranca: deve retornar 401 com code AUTH_TOKEN_INVALID quando Authorization nao estiver no formato Bearer <token>."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status deve ser 401', function () {",
+                      "  pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test('code deve ser AUTH_TOKEN_INVALID', function () {",
+                      "  var json = pm.response.json();",
+                      "  pm.expect(json.code).to.eql('AUTH_TOKEN_INVALID');",
+                      "});",
+                      "",
+                      "pm.test('deve retornar correlationId no body', function () {",
+                      "  var json = pm.response.json();",
+                      "  pm.expect(json.correlationId).to.be.a('string').and.not.empty;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
         }
       ]
     }
@@ -158,6 +451,11 @@
     {
       "key": "token",
       "value": "Bearer seu-token-aqui",
+      "type": "string"
+    },
+    {
+      "key": "invalidToken",
+      "value": "token-sem-bearer",
       "type": "string"
     },
     {

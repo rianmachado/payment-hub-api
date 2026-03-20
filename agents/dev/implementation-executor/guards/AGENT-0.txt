@@ -1,0 +1,87 @@
+----------------------------------------
+AGENTE — CONTROLLED COMMIT EXECUTOR
+COMMIT ESPECÍFICO — feat(guards)
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Implemente somente o commit:
+
+feat(guards): implement authorization guards
+
+Contexto:
+- o setup do projeto já está concluído
+- o implementation-commit-plan já foi validado
+- feat(modules), feat(dto), feat(idempotency), feat(payment-service), feat(controller), feat(exception-filters) e feat(interceptors) já foram concluídos com sucesso
+- esta etapa deve seguir rigorosamente a documentação do projeto
+
+Documentação fonte da verdade:
+
+docs/
+- requirements.md
+- data-state.md
+- api/openapi.md
+- quality.md
+- roadmap.md
+- c4/components.md
+- dev-commit-logs/implementation-commit-plan.md
+
+Objetivo:
+Implementar somente a camada de guards para proteção de acesso aos endpoints, alinhada à documentação, sem antecipar um sistema de autenticação/autorização mais complexo do que o previsto.
+
+Escopo esperado:
+- criação dos authorization guards necessários
+- validação mínima coerente com o header Authorization
+- proteção dos endpoints apropriados
+- wiring mínimo necessário no controller ou escopo adequado
+- comportamento compatível com a documentação atual
+
+Entram neste commit:
+- guard(s) necessários para proteger os endpoints documentados
+- integração do(s) guard(s) com o controller ou com o escopo configurado
+- validação mínima de acesso conforme o plano
+- estrutura de pastas/arquivos da camada de guards, se ainda não existir
+
+Não pode fazer:
+- implementar sistema completo de autenticação além do escopo atual
+- criar RBAC avançado, papéis complexos ou autorização granular não documentada
+- alterar OpenAPI arbitrariamente
+- mover lógica de negócio para o guard
+- duplicar responsabilidades de interceptor, middleware ou exception filter
+- criar endpoints extras
+- acoplar fortemente a camada de segurança a detalhes internos indevidos
+
+Se houver dependência de evolução futura:
+- manter a abordagem mínima
+- usar abstrações pequenas
+- não antecipar um framework de auth mais complexo
+
+Formato da resposta:
+
+# 1. Escopo exato do commit
+- objetivo
+- o que entra
+- o que não entra
+
+# 2. Arquivos que serão criados ou alterados
+
+# 3. Implementação mínima
+Mostrar somente o código necessário para este commit.
+
+# 4. Limites aplicados
+Explicar claramente o que ficou fora propositalmente.
+
+# 5. Validação arquitetural
+Explicar como o commit respeita:
+- quality
+- openapi
+- requirements
+- implementation plan
+
+# 6. Próximo passo sugerido
+Apenas sugerir.
+Não implementar.
+
+Critério principal:
+Os guards devem proteger os endpoints de forma mínima, clara e aderente à documentação, sem extrapolar para um sistema de auth mais complexo do que o plano prevê.
+----------------------------------------

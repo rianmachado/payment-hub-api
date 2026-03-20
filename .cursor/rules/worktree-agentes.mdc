@@ -43,6 +43,10 @@ worktrees:
     path: /worktrees/payment-hub-api-feat-interceptors
     branch: feat/interceptors
 
+  - name: agents/dev/implementation-executor/guards/AGENT-0.txt, agents/dev/architecture-executor/guards/REVIEW-AGENTE-0.txt, agents/dev/architecture-executor/guards/ADJUSTMENTS-AGENT-0.txt
+    path: /worktrees/payment-hub-api-feat-guards
+    branch: feat/guards
+
 notes:
   - Use paths relativos para portabilidade entre máquinas
   - A branch main só deve ser atualizada via PR

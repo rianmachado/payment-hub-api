@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
 import { IdempotencyModule } from '../idempotency/idempotency.module';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
@@ -10,7 +11,7 @@ import { NoopProvidersFacade } from './integrations/providers/noop-providers.fac
 import { PROVIDERS_FACADE } from './integrations/providers/providers-facade.interface';
 
 @Module({
-  imports: [IdempotencyModule],
+  imports: [AuthModule, IdempotencyModule],
   controllers: [PaymentsController],
   providers: [
     PaymentsService,
