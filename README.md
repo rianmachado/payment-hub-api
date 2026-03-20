@@ -1,179 +1,166 @@
-# Payment Hub API — Setup do projeto (branch `chore/project-setup`)
+# Payment Hub API
 
-Este README descreve **apenas** a base técnica do projeto: pré-requisitos, estrutura e como rodar/validar o ambiente local. Não cobre funcionalidades de negócio; outros READMEs serão criados conforme a implementação das features.
+API para orquestracao de pagamentos, com foco em consistencia de contratos, idempotencia e evolucao incremental por camadas.
 
-**Objetivo geral do projeto, escopo (IN/OUT) e fluxos (criar pagamento, consultar, idempotência)** estão em **[docs/requirements.md](docs/requirements.md)** — essa documentação não foi removida, apenas fica na pasta `docs/`.
+Este `README.md` e a porta de entrada tecnica do projeto: explica como iniciar localmente, como navegar na documentacao funcional e nao funcional, e como usar os artefatos de `docs/postman`.
 
----
+## Objetivo do projeto
 
-## Branch e objetivo
+- Expor endpoints de pagamentos alinhados ao contrato OpenAPI.
+- Garantir comportamento previsivel para reenvio de requisicoes (idempotencia).
+- Manter separacao de responsabilidades entre camadas HTTP, aplicacao e modulos de infraestrutura.
 
-| Item | Valor |
-|------|--------|
-| **Branch** | `chore/project-setup` |
-| **Objetivo** | Base técnica para desenvolvimento local (NestJS, TypeScript, tooling, health check). |
-| **Escopo** | Bootstrap, TypeScript strict, ESLint, Prettier, env, ConfigModule, scripts npm, endpoint `/health`. |
+## Stack e requisitos
 
----
+- `Node.js >= 24`
+- `npm`
+- `NestJS` + `TypeScript`
+- `ESLint` + `Prettier`
 
-## Pré-requisitos
-
-| Requisito | Versão / observação |
-|-----------|---------------------|
-| **Node.js** | `>= 24.0.0` ([nodejs.org](https://nodejs.org)) |
-| **npm** | Incluso com Node (ou `>= 10.x`) |
-| **Git** | Para clone e commits |
-
-Verificar versões:
+Verificacao rapida:
 
 ```bash
-node -v   # v24.x.x
+node -v
 npm -v
 ```
 
----
+## Quick Start
 
-## Estrutura do projeto (após o setup)
-
-```
-payment-hub-api/
-├── docs/                      # Documentação (requirements, API, C4, quality, roadmap)
-│   ├── api/
-│   ├── c4/
-│   ├── dev-commit-logs/       # Logs de commits por branch
-│   └── ...
-├── src/
-│   ├── main.ts                # Bootstrap da aplicação NestJS
-│   ├── app.module.ts          # Módulo raiz (ConfigModule, HealthModule)
-│   └── health/                # Health check para validação local
-│       ├── health.module.ts
-│       └── health.controller.ts
-├── .editorconfig              # LF, UTF-8, trim trailing whitespace
-├── .env.example               # Exemplo de variáveis (PORT, NODE_ENV)
-├── .eslintrc.cjs              # ESLint (TypeScript + NestJS)
-├── .gitattributes             # Fins de linha LF no repositório
-├── .prettierrc                # Prettier (formatação)
-├── .prettierignore
-├── nest-cli.json              # Nest CLI
-├── package.json
-├── tsconfig.json              # TypeScript (strict)
-├── tsconfig.build.json
-└── README.md                  # Este arquivo (setup da branch)
-```
-
-Arquivos sensíveis (não versionados): `.env` (definido a partir de `.env.example`).
-
----
-
-## Configuração local
-
-### 1. Clonar e instalar dependências
+1. Clonar projeto e instalar dependencias:
 
 ```bash
 git clone <repo-url>
 cd payment-hub-api
-git checkout chore/project-setup
 npm install
 ```
 
-### 2. Variáveis de ambiente
-
-Copiar o exemplo e ajustar se necessário:
+2. Configurar ambiente local:
 
 ```bash
 cp .env.example .env
 ```
 
-Variáveis mínimas (já documentadas em `.env.example`):
+3. Subir aplicacao:
 
-| Variável   | Uso                          | Exemplo    |
-|------------|------------------------------|------------|
-| `PORT`     | Porta HTTP da aplicação      | `3000`     |
-| `NODE_ENV` | Ambiente (development, etc.) | `development` |
+```bash
+npm run start:dev
+```
 
-A aplicação usa `ConfigModule` (NestJS) para ler essas variáveis; não é necessário carregar `.env` manualmente.
+4. Validar health check:
 
----
+```bash
+curl http://localhost:3000/health
+```
 
-## Scripts npm
+Resposta esperada: `200` com payload de status (ex.: `{ "status": "ok" }`).
 
-| Script        | Comando                    | Uso                          |
-|---------------|----------------------------|------------------------------|
-| `npm run build`   | `nest build`           | Compila para `dist/`         |
-| `npm run start`   | `nest start`           | Inicia a aplicação           |
-| `npm run start:dev`| `nest start --watch`   | Desenvolvimento com watch    |
-| `npm run start:debug` | `nest start --debug --watch` | Debug com watch  |
-| `npm run start:prod` | `node dist/main`     | Produção (rodar após build)  |
-| `npm run lint`     | ESLint com fix          | Lint em `src/`, `test/`      |
-| `npm run format`   | Prettier                | Formatação de código         |
+## Scripts principais
 
----
+| Script | Uso |
+|---|---|
+| `npm run build` | Compila o projeto |
+| `npm run start` | Inicia aplicacao |
+| `npm run start:dev` | Desenvolvimento com watch |
+| `npm run start:debug` | Desenvolvimento com debug |
+| `npm run start:prod` | Execucao do build em producao |
+| `npm run lint` | Lint e correcoes aplicaveis |
+| `npm run format` | Formatacao com Prettier |
 
-## Validação do ambiente
+## Arquitetura de implementacao (por etapas)
 
-1. **Build**
+Com base nos prompts dos agentes de implementacao, a construcao do sistema segue este fluxo:
 
-   ```bash
-   npm run build
-   ```
-   Deve gerar a pasta `dist/` sem erros.
+1. `setup`: base tecnica, tooling, `ConfigModule`, scripts, `/health`.
+2. `modules`: scaffolding dos modulos centrais e boundaries.
+3. `dto`: contratos de API e validacao de entrada.
+4. `idempotency`: base de chave idempotente, replay/conflito.
+5. `payment-service`: orquestracao da aplicacao (sem responsabilidades HTTP).
+6. `controller`: exposicao de endpoints finos, delegando ao service.
 
-2. **Subir em modo desenvolvimento**
+Esse encadeamento evita acoplamento precoce e facilita rastreabilidade por commit e por responsabilidade.
 
-   ```bash
-   npm run start:dev
-   ```
+## Como ler a documentacao do projeto
 
-3. **Health check**
+Use a sequencia abaixo para onboarding tecnico completo:
 
-   Com a aplicação rodando (porta padrão `3000` ou a definida em `PORT`):
+1. Visao funcional e escopo:
+   - `docs/requirements.md`
+2. Estados e ciclo de vida de pagamento:
+   - `docs/data-state.md`
+3. Contrato HTTP da API:
+   - `docs/api/openapi.md`
+4. Qualidade, criterios e restricoes:
+   - `docs/quality.md`
+5. Roadmap e evolucao planejada:
+   - `docs/roadmap.md`
+6. Arquitetura e boundaries:
+   - `docs/c4/`
+7. Historico de execucao por branch/commit:
+   - `docs/dev-commit-logs/`
 
-   ```bash
-   curl http://localhost:3000/health
-   ```
-   Resposta esperada: `200 OK` e corpo `{ "status": "ok" }`.
+## Guia dos artefatos Postman (`docs/postman`)
 
-4. **Lint e formatação**
+O projeto possui dois artefatos versionados:
 
-   ```bash
-   npm run lint
-   npm run format
-   ```
+- `docs/postman/payment-hub-api.postman_collection.json`
+- `docs/postman/payment-hub-api.local.postman_environment.json`
 
----
+Uso recomendado:
 
-## Detalhes técnicos (esta branch)
+1. Importe os dois arquivos no Postman (Collection + Environment).
+2. Selecione o environment local antes de executar requisicoes.
+3. Confira variaveis de ambiente (ex.: base URL e headers) e ajuste se necessario para sua maquina.
+4. Execute primeiro o endpoint de health e depois os fluxos de pagamento.
+5. Em alteracoes de contrato, atualize os artefatos junto com o OpenAPI para evitar divergencia.
 
-### TypeScript
+Boas praticas:
 
-- **tsconfig.json**: `strict: true`, `noImplicitAny: true`, `rootDir: "./src"`, `outDir: "./dist"`.
-- **tsconfig.build.json**: Estende o principal e exclui testes para o build de produção.
+- Trate OpenAPI como fonte de verdade para contratos.
+- Use a collection como acelerador de teste manual e smoke test local.
+- Versione alteracoes da collection/environment no mesmo contexto da mudanca de API.
 
-### ESLint
+## Visao geral dos agentes (`agents/dev/`)
 
-- Parser e plugins: TypeScript e NestJS (`.eslintrc.cjs`).
-- Integração com Prettier (`plugin:prettier/recommended`).
-- Regras: `no-explicit-any: warn`, `no-unused-vars: error`.
+Os agentes de `agents/dev/implementation-executor/` organizam a implementacao por etapas e ajudam a manter escopo controlado por commit.
 
-### Prettier
+- `setup`: prepara base tecnica (tooling, env, scripts, health check).
+- `modules`: cria estrutura de modulos e wiring minimo.
+- `dto`: define contratos de API e validacoes de entrada.
+- `idempotency`: estrutura validacao de `Idempotency-Key` e base de replay/conflito.
+- `payment-service`: implementa orquestracao de aplicacao (sem camada HTTP).
+- `controller`: expoe endpoints HTTP conforme OpenAPI, com controller fino.
 
-- Configuração em `.prettierrc`: single quotes, trailing commas, `printWidth: 100`, `tabWidth: 2`, `semi: true`.
+Diretriz de uso:
 
-### ConfigModule
+- Leia primeiro `docs/requirements.md` e `docs/api/openapi.md`.
+- Use os agentes como guia de execucao tecnica (nao como fonte de regra de negocio).
+- Registre evidencias de entrega em `docs/dev-commit-logs/`.
 
-- `ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env'] })` em `AppModule`.
-- Leitura de configuração via `ConfigService` (ex.: `PORT` em `main.ts`).
+## Estrutura de pastas relevante
 
-### Fins de linha
+```text
+payment-hub-api/
+|-- src/                        # Codigo da aplicacao
+|-- docs/                       # Documentacao funcional e tecnica
+|   |-- api/                    # Contrato OpenAPI
+|   |-- c4/                     # Arquitetura
+|   |-- postman/                # Collection e environment
+|   `-- dev-commit-logs/        # Logs de implementacao por branch
+|-- agents/                     # Prompts e guias dos agentes de execucao
+|-- .env.example
+`-- README.md
+```
 
-- Repositório padronizado em **LF** (`.gitattributes`: `* text=auto eol=lf`).
-- `.editorconfig` define `end_of_line = lf` para o editor. Em caso de avisos no Windows, ver `docs/LINE-ENDINGS.md`.
+## Convencoes e qualidade
 
----
+- TypeScript em modo estrito.
+- Lint e formatacao obrigatorios.
+- Endpoints alinhados ao `docs/api/openapi.md`.
+- Mudancas devem respeitar boundaries definidos no C4.
 
-## Documentação adicional
+## Proximos passos para quem esta comecando
 
-- **Objetivo, escopo IN/OUT e fluxos detalhados**: [docs/requirements.md](docs/requirements.md) (fonte da verdade).
-- **API e arquitetura**: [docs/api/openapi.md](docs/api/openapi.md), [docs/c4/](docs/c4/), [docs/quality.md](docs/quality.md), [docs/roadmap.md](docs/roadmap.md).
-- **Commits desta branch**: `docs/dev-commit-logs/project-setup.md` e `docs/dev-commit-logs/project-setup-commands.md`.
-- **Fins de linha no Windows**: `docs/LINE-ENDINGS.md`.
+- Rodar `npm run build` e `npm run start:dev`.
+- Validar `GET /health`.
+- Executar collection do Postman no ambiente local.
+- Ler `docs/requirements.md` e `docs/api/openapi.md` antes de implementar novas features.
