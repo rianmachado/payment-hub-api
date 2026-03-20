@@ -1,0 +1,54 @@
+----------------------------------------
+AGENTE — ARCHITECT ADJUSTMENTS EXECUTOR
+COMMIT EM AJUSTE — feat(exception-filters)
+----------------------------------------
+
+Você é um Desenvolvedor Senior especialista em Node.js, NestJS e TypeScript.
+
+Aplique APENAS os ajustes abaixo, sem expandir escopo para commits futuros.
+
+Contexto:
+- commit atual: feat(exception-filters): standardize error handling layer
+- a revisão arquitetural já foi concluída
+- objetivo é corrigir pendências do review mantendo o commit pequeno e focado
+
+Documentação fonte da verdade:
+docs/
+- requirements.md
+- api/openapi.md
+- quality.md
+- dev-commit-logs/implementation-commit-plan.md
+
+Ajustes obrigatórios antes do commit/merge:
+1) Corrigir consistência do payload de validação no exception filter:
+   - no cenário de erro de validação (ValidationPipe/BadRequestException),
+   - `details.fieldErrors` deve refletir melhor o contrato documentado,
+   - incluir `field` e `error` quando essas informações estiverem disponíveis,
+   - evitar resposta ambígua com apenas `{ error }`.
+
+Ajustes recomendados mas não bloqueantes:
+1) Aproximar mensagens default do filter aos termos da documentação (openapi/requirements), sem alterar contratos já estáveis.
+2) Reduzir pequena duplicação interna no filter (ex.: ramos que retornam payload padrão), mantendo legibilidade.
+3) Não alterar arquitetura para abstrair adapter HTTP agora; apenas manter código organizado para facilitar evolução futura.
+
+Restrições:
+- não implementar interceptors
+- não implementar guards
+- não adicionar observabilidade transversal completa
+- não mover lógica de negócio para o filter
+- não alterar OpenAPI arbitrariamente
+- não criar novos comportamentos fora de exception-filters
+
+Critério de aceite:
+- payload de erro continua no formato `{ code, message, details?, correlationId }`
+- validação retorna `details.fieldErrors` consistente com documentação
+- mudanças mínimas, objetivas e aderentes ao commit feat(exception-filters)
+
+Formato da resposta:
+# 1. Escopo aplicado
+# 2. Arquivos alterados
+# 3. Ajustes obrigatórios implementados
+# 4. Ajustes recomendados implementados (se houver)
+# 5. Itens recomendados deixados para depois (se houver)
+# 6. Validação final de aderência ao commit
+----------------------------------------

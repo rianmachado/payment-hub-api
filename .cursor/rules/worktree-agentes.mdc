@@ -35,6 +35,10 @@ worktrees:
     path: /worktrees/payment-hub-api-feat-controller
     branch: feat/controller
 
+  - name: agents/dev/implementation-executor/exception-filters/AGENT-0.txt, agents/dev/architecture-executor/exception-filters/REVIEW-AGENTE-0.txt, agents/dev/architecture-executor/exception-filters/ADJUSTMENTS-AGENT-0.txt
+    path: /worktrees/payment-hub-api-feat-exception-filters
+    branch: feat/exception-filters
+
 notes:
   - Use paths relativos para portabilidade entre máquinas
   - A branch main só deve ser atualizada via PR
